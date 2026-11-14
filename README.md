@@ -43,7 +43,7 @@ _Pendiente._
 |---|---|---|
 | APIs / datos abiertos (sesión 03) | Ingesta de convocatorias del SEACE en formato OCDS | `scripts/` |
 | Dashboards (sesión 05) | Oportunidades por región, monto y fecha | `app/app.py` |
-| LLM con salidas estructuradas (sesión 08) | _pendiente_ | `ai/` |
+| LLM con salidas estructuradas (sesión 08) | DeepSeek lee cada convocatoria y el perfil de la PYME y devuelve un JSON (resumen, puntaje de encaje 0-100, qué revisar, alerta) validado con Pydantic | `ai/analizar.py` |
 
 ## 9. Qué hizo el agente
 _Pendiente._

@@ -3,6 +3,7 @@
 Correr con:  streamlit run app/app.py
 """
 
+import unicodedata
 from pathlib import Path
 
 import pandas as pd
@@ -14,12 +15,17 @@ DATA = Path(__file__).resolve().parent.parent / "data" / "convocatorias.parquet"
 st.set_page_config(page_title="LicitaPYME", page_icon="📋", layout="wide")
 
 
+def normalizar(s: str) -> str:
+    """Mayúsculas y sin tildes, para que 'útiles' encuentre 'UTILES'."""
+    s = unicodedata.normalize("NFKD", s.upper())
+    return "".join(c for c in s if not unicodedata.combining(c))
+
+
 @st.cache_data
 def cargar() -> pd.DataFrame:
     df = pd.read_parquet(DATA)
-    df["texto"] = (
-        df["descripcion"].fillna("") + " " + df["rubros_cubso"].fillna("") + " " + df["rubros_unspsc"].fillna("")
-    ).str.upper()
+    texto = df["descripcion"].fillna("") + " " + df["rubros_cubso"].fillna("") + " " + df["rubros_unspsc"].fillna("")
+    df["texto"] = texto.map(normalizar)
     return df
 
 
@@ -37,7 +43,7 @@ df = cargar()
 st.sidebar.header("Perfil de tu empresa")
 palabras = st.sidebar.text_input(
     "¿Qué vendes? (palabras clave, separadas por coma)",
-    value="útiles de oficina, papel, tóner",
+    value="limpieza, útiles de escritorio, papel",
     help="Ej.: útiles de oficina, limpieza, uniformes, computadoras, alimentos",
 )
 departamentos = sorted(df["departamento"].dropna().unique())
@@ -55,7 +61,7 @@ if solo_abiertas:
 if monto_max:
     f = f[(f["monto_soles"].isna()) | (f["monto_soles"] <= monto_max)]
 
-claves = [p.strip().upper() for p in palabras.split(",") if p.strip()]
+claves = [normalizar(p.strip()) for p in palabras.split(",") if p.strip()]
 if claves:
     coincide = pd.concat([f["texto"].str.contains(c, regex=False) for c in claves], axis=1)
     f = f.assign(coincidencias=coincide.sum(axis=1))
@@ -71,7 +77,7 @@ st.caption(
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("Procesos en la base", f"{len(df):,}")
 c2.metric("Oportunidades para ti", f"{len(f):,}")
-c3.metric("Monto total", soles(f["monto_soles"].sum()))
+c3.metric("Monto total", f"S/ {f['monto_soles'].sum() / 1e6:,.1f} M")
 c4.metric("Entidades compradoras", f"{f['entidad'].nunique():,}")
 
 if f.empty:
@@ -98,7 +104,7 @@ tabla = f[
 st.dataframe(
     tabla,
     hide_index=True,
-    use_container_width=True,
+    width="stretch",
     column_config={
         "Publicado": st.column_config.DateColumn(format="DD/MM/YYYY"),
         "Monto (S/)": st.column_config.NumberColumn(format="%,.0f"),
@@ -114,11 +120,11 @@ por_region = f.groupby("departamento", as_index=False).agg(procesos=("ocid", "co
 g1.plotly_chart(
     px.bar(por_region.sort_values("procesos"), x="procesos", y="departamento", orientation="h",
            labels={"procesos": "Convocatorias", "departamento": ""}, title="Convocatorias por región"),
-    use_container_width=True,
+    width="stretch",
 )
 top_ent = f.groupby("entidad", as_index=False).agg(monto=("monto_soles", "sum")).nlargest(10, "monto")
 g2.plotly_chart(
     px.bar(top_ent.sort_values("monto"), x="monto", y="entidad", orientation="h",
            labels={"monto": "Monto (S/)", "entidad": ""}, title="Entidades que más compran lo tuyo"),
-    use_container_width=True,
+    width="stretch",
 )

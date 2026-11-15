@@ -15,7 +15,7 @@ st.caption(
 p = comun.perfil()
 distritos = comun.cargar_distritos()
 
-with st.form("perfil"):
+with st.form("form_perfil"):  # no usar "perfil": esa clave guarda los datos en la sesión
     st.subheader("Datos de la empresa")
     c1, c2 = st.columns([3, 1])
     nombre = c1.text_input("Nombre o razón social", p["nombre"])
@@ -87,7 +87,11 @@ with st.form("perfil"):
         }
         # El perfil cambió: las evaluaciones anteriores ya no aplican.
         st.session_state["evaluaciones"] = {}
-        st.success("Perfil guardado. Las evaluaciones anteriores se borraron porque dependían del perfil anterior.")
+        st.session_state["_perfil_guardado"] = True
+        st.rerun()  # para que la barra lateral y las demás secciones usen el perfil nuevo
+
+if st.session_state.pop("_perfil_guardado", False):
+    st.success("Perfil guardado. Las evaluaciones anteriores se borraron porque dependían del perfil anterior.")
 
 st.divider()
 st.subheader("Llevar mi perfil a otra sesión")

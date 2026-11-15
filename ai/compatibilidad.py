@@ -30,10 +30,10 @@ from ai.llm import pedir_json
 Estado = Literal["cumple", "por_acreditar", "no_cumple", "sin_informacion"]
 VALOR = {"cumple": 1.0, "por_acreditar": 0.6, "no_cumple": 0.0}
 ETIQUETA_ESTADO = {
-    "cumple": "✅ Cumple",
-    "por_acreditar": "📎 Debe acreditar",
-    "no_cumple": "❌ No cumple",
-    "sin_informacion": "❔ Sin información",
+    "cumple": "Cumple",
+    "por_acreditar": "Debe acreditar",
+    "no_cumple": "No cumple",
+    "sin_informacion": "Sin información",
 }
 
 CRITERIOS = {

@@ -1,122 +1,77 @@
-"""Perfil de mi empresa: lo que la IA usa para evaluar la compatibilidad."""
+"""Perfil de mi empresa: editar sin perder oportunidades guardadas ni historial."""
 
 import json
 
 import streamlit as st
 
 import comun
+import db
+import formulario_perfil as fp
+import sesion
+import ui
 
-st.title("🏢 Perfil de mi empresa")
-st.caption(
-    "Con este perfil LicitaPYME busca convocatorias y la IA evalúa la compatibilidad. "
-    "Viene cargado con una empresa de ejemplo: reemplázalo con los datos de la tuya."
-)
-
+emp = sesion.empresa_actual()
+uid = sesion.usuario_id()
 p = comun.perfil()
-distritos = comun.cargar_distritos()
 
-with st.form("form_perfil"):  # no usar "perfil": esa clave guarda los datos en la sesión
-    st.subheader("Datos de la empresa")
-    c1, c2 = st.columns([3, 1])
-    nombre = c1.text_input("Nombre o razón social", p["nombre"])
-    ruc = c2.text_input("RUC (opcional)", p["ruc"], max_chars=11)
-    actividad = st.text_input("Actividad económica (giro / CIIU)", p["actividad"])
-    productos = st.text_area("Bienes y servicios que ofreces", p["productos"], height=90)
-    palabras = st.multiselect(
-        "Palabras clave para buscar convocatorias",
-        options=sorted(set(p["palabras_clave"])),
-        default=p["palabras_clave"],
-        accept_new_options=True,
-        help="Escribe una palabra y presiona Enter para agregarla. Ej.: servicio de limpieza, uniformes, tóner.",
-    )
+ui.encabezado("Perfil de mi empresa", "Edita la información de tu empresa. Tus oportunidades guardadas, estados e "
+              "historial se conservan; las evaluaciones de IA anteriores se marcan como desactualizadas.",
+              sobre=p["nombre"])
 
-    st.subheader("Ubicación y cobertura")
-    st.caption(
-        "Tu **domicilio fiscal** solo sirve para estimar distancias. Tu **cobertura** son los departamentos "
-        "donde estás dispuesta(o) a entregar bienes o prestar servicios: no excluye convocatorias, "
-        "sirve para priorizarlas."
-    )
-    opciones_dom = distritos["inei"].tolist()
-    etiquetas = dict(zip(distritos["inei"], distritos["etiqueta"]))
-    domicilio = st.selectbox(
-        "Domicilio fiscal (distrito) 🔍",
-        options=opciones_dom,
-        index=opciones_dom.index(p["domicilio_ubigeo"]) if p["domicilio_ubigeo"] in opciones_dom else None,
-        format_func=lambda x: etiquetas.get(x, x).title(),
-        placeholder="Escribe para buscar tu distrito…",
-    )
-    cobertura = st.multiselect(
-        "Departamentos donde puedes atender 🔍",
-        options=comun.DEPARTAMENTOS,
-        default=[d for d in p["cobertura"] if d in comun.DEPARTAMENTOS],
-        format_func=str.title,
-        placeholder="Escribe para buscar un departamento…",
-    )
-    todo_peru = st.checkbox("Puedo atender en todo el Perú", value=len(p["cobertura"]) == len(comun.DEPARTAMENTOS))
+if st.session_state.pop("_perfil_guardado", None):
+    st.success("Perfil actualizado. Las recomendaciones y búsquedas ya usan la nueva información.", icon=":material/check_circle:")
 
-    st.subheader("Capacidad")
-    c1, c2, c3 = st.columns(3)
-    tipos = c1.multiselect("Tipo de contratación", comun.TIPOS, default=p["tipos"])
-    monto_max = c2.number_input("Monto máximo por contrato (S/)", 0, 100_000_000, int(p["monto_max"]), step=50_000)
-    facturacion = c3.number_input("Facturación anual (S/)", 0, 1_000_000_000, int(p["facturacion_anual"]), step=50_000)
-    experiencia = st.text_area("Experiencia (años, clientes, montos, contratos con el Estado)", p["experiencia"], height=90)
-    capacidad = st.text_area("Capacidad operativa (personal, equipos, locales)", p["capacidad"], height=70)
-    rnp = st.radio(
-        "¿Inscrito en el RNP (Registro Nacional de Proveedores)?",
-        ["Sí, vigente", "En trámite", "No", "No sé"],
-        index=["Sí, vigente", "En trámite", "No", "No sé"].index(p["rnp"]),
-        horizontal=True,
-        help="El RNP vigente es obligatorio para contratar con el Estado.",
-    )
+tab_datos, tab_oferta, tab_cob, tab_ia, tab_datos_exp = st.tabs(
+    ["Datos", "Productos y servicios", "Cobertura y capacidad", "Interpretación de la IA", "Mis datos"])
 
-    if st.form_submit_button("💾 Guardar perfil", type="primary"):
-        st.session_state["perfil"] = {
-            "nombre": nombre.strip() or "Mi empresa",
-            "ruc": ruc.strip(),
-            "actividad": actividad.strip(),
-            "productos": productos.strip(),
-            "palabras_clave": palabras,
-            "domicilio_ubigeo": domicilio,
-            "cobertura": list(comun.DEPARTAMENTOS) if todo_peru else cobertura,
-            "tipos": tipos or list(comun.TIPOS),
-            "monto_max": monto_max,
-            "facturacion_anual": facturacion,
-            "experiencia": experiencia.strip(),
-            "capacidad": capacidad.strip(),
-            "rnp": rnp,
-        }
-        # El perfil cambió: las evaluaciones anteriores ya no aplican.
-        st.session_state["evaluaciones"] = {}
-        st.session_state.pop("palabras_busqueda", None)  # la búsqueda vuelve a las palabras del perfil nuevo
-        st.session_state["_perfil_guardado"] = True
-        st.rerun()  # para que la barra lateral y las demás secciones usen el perfil nuevo
 
-if st.session_state.pop("_perfil_guardado", False):
-    st.success("Perfil guardado. Las evaluaciones anteriores se borraron porque dependían del perfil anterior.")
+def guardar(nuevos: dict, paso: int):
+    errs = fp.errores(paso, {**p, **nuevos})
+    if errs:
+        for x in errs:
+            st.error(x, icon=":material/error:")
+        return
+    despues = {**p, **nuevos}
+    relevante = fp.cambio_relevante(p, despues)
+    db.actualizar_empresa(emp["id"], uid, datos=despues, subir_version=relevante)
+    if relevante:
+        db.reiniciar_analisis(emp["id"], uid)
+    db.registrar_evento(emp["id"], "Perfil actualizado")
+    sesion.limpiar_cache()
+    st.session_state["_perfil_guardado"] = True
+    st.rerun()
 
-st.divider()
-st.subheader("Llevar mi perfil a otra sesión")
-st.caption("Esta versión no tiene cuentas de usuario: descarga tu perfil y tus oportunidades guardadas y vuelve a cargarlos después.")
-c1, c2 = st.columns(2)
-paquete = {
-    "perfil": comun.perfil(),
-    "guardadas": comun.guardadas(),
-    "evaluaciones": comun.evaluaciones(),
-}
-c1.download_button(
-    "⬇️ Descargar mi espacio (JSON)",
-    json.dumps(paquete, ensure_ascii=False, indent=1, default=str),
-    file_name="licitapyme_mi_espacio.json",
-    mime="application/json",
-)
-archivo = c2.file_uploader("Cargar mi espacio", type="json", label_visibility="collapsed")
-if archivo is not None and st.session_state.get("_espacio_cargado") != archivo.file_id:
-    try:
-        datos = json.loads(archivo.getvalue())
-        st.session_state["perfil"] = {**comun.PERFIL_DEMO, **datos.get("perfil", {})}
-        st.session_state["guardadas"] = datos.get("guardadas", {})
-        st.session_state["evaluaciones"] = datos.get("evaluaciones", {})
-        st.session_state["_espacio_cargado"] = archivo.file_id
-        st.rerun()
-    except (json.JSONDecodeError, AttributeError):
-        st.error("El archivo no es un espacio de LicitaPYME válido.")
+
+with tab_datos:
+    with st.form("form_datos"):
+        nuevos = fp.bloque_datos(p, "ed")
+        if st.form_submit_button("Guardar cambios", type="primary", icon=":material/save:"):
+            guardar(nuevos, 1)
+with tab_oferta:
+    with st.form("form_oferta"):
+        nuevos = fp.bloque_oferta(p, "ed")
+        if st.form_submit_button("Guardar cambios", type="primary", icon=":material/save:"):
+            guardar(nuevos, 2)
+with tab_cob:
+    with st.form("form_cobertura"):
+        nuevos = fp.bloque_cobertura(p, "ed")
+        if st.form_submit_button("Guardar cambios", type="primary", icon=":material/save:"):
+            guardar(nuevos, 3)
+with tab_ia:
+    st.caption("La IA sugiere palabras clave y categorías del catálogo del Estado a partir de lo que declaraste. "
+               "Cada sugerencia se prueba contra las convocatorias reales.")
+    resultado = fp.vista_analisis(emp, "Guardar palabras y categorías", automatico=False)
+    if resultado:
+        guardar(resultado, 2)
+with tab_datos_exp:
+    st.caption("Tu información está guardada en la base de datos de LicitaPYME"
+               + (" (en la nube)." if db.es_nube() else " (en este equipo).")
+               + " Puedes descargar una copia completa de esta empresa.")
+    copia = {
+        "perfil": p,
+        "guardadas": comun.guardadas(),
+        "evaluaciones": comun.evaluaciones(),
+        "historial": db.historial_de(emp["id"]),
+    }
+    st.download_button("Descargar mis datos (JSON)", json.dumps(copia, ensure_ascii=False, indent=1, default=str),
+                       file_name=f"licitapyme_{emp['id']}.json", mime="application/json", icon=":material/download:")

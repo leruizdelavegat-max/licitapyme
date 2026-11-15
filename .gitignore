@@ -5,6 +5,10 @@
 # Datos crudos pesados (se descargan con scripts/descargar_datos.py)
 data/raw/
 
+# Base de datos local (perfiles, guardadas, historial): es de cada usuario
+data/*.db
+data/*.db-journal
+
 # Python
 __pycache__/
 *.pyc

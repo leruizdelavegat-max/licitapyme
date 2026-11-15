@@ -12,13 +12,15 @@ import streamlit as st
 
 import comun
 
-st.title("📊 Análisis del mercado")
-st.caption(
-    "Contrataciones ya adjudicadas (datos abiertos del SEACE, desde 2024). Te ayudan a estimar precios, "
-    "saber quién compra lo que vendes y quién suele ganar. **Los precios pasados no garantizan precios futuros.**"
-)
+import ui  # noqa: E402
 
 p = comun.perfil()
+ui.encabezado(
+    "Análisis del mercado",
+    "Contrataciones ya adjudicadas (datos abiertos del SEACE, desde 2024): cuánto se suele pagar, quién compra lo que "
+    "vendes y quién suele ganar. Los precios pasados son una referencia, no una garantía.",
+    sobre=p["nombre"],
+)
 adj = comun.cargar_adjudicaciones()
 
 # ------------------------------------------------------------------ elegir rubro
@@ -30,19 +32,20 @@ with st.container(border=True):
     if claves:
         mask = np.zeros(len(adj), dtype=bool)
         for k in claves:
-            mask |= adj["texto"].str.contains(k, regex=False).to_numpy()
+            mask |= comun.contiene(adj["texto"], k).to_numpy()
         candidatos = adj[mask]
     else:
         candidatos = adj
     conteo = candidatos["cubso"].value_counts()
     opciones = conteo.index.tolist()[:300]
     elegidos = c2.multiselect(
-        "Categorías CUBSO a comparar 🔍", opciones, default=opciones[:2],
+        "Categorías CUBSO a comparar", opciones,
+        default=[c for c in (p.get("categorias") or []) if c in opciones] or opciones[:2],
         format_func=lambda x: f"{x} ({conteo[x]:,})",
         help="Solo se comparan ítems de la misma categoría del catálogo oficial: así la comparación es razonable.",
     )
     c1, c2 = st.columns(2)
-    deps = c1.multiselect("Departamento de la entidad 🔍", comun.DEPARTAMENTOS, format_func=str.title, placeholder="Todo el Perú")
+    deps = c1.multiselect("Departamento de la entidad", comun.DEPARTAMENTOS, format_func=str.title, placeholder="Todo el Perú")
     sin_atipicos = c2.toggle("Excluir valores atípicos", value=True,
                              help="Quita montos extremos (fuera de 3 rangos intercuartílicos en escala logarítmica), "
                                   "por ejemplo contratos que agrupan muchas sedes o años.")
@@ -66,14 +69,14 @@ if d.empty:
     st.stop()
 
 st.caption(
-    f"📅 Periodo analizado: **{d['fecha'].min():%d/%m/%Y} – {d['fecha'].max():%d/%m/%Y}** · "
+    f"Periodo analizado: **{d['fecha'].min():%d/%m/%Y} – {d['fecha'].max():%d/%m/%Y}** · "
     f"**{len(d):,} ítems adjudicados** en **{d['ocid'].nunique():,} procesos**"
     + (f" · {n_excl} valores atípicos excluidos" if n_excl else "")
 )
 if len(d) < 10:
     st.warning("Hay pocas observaciones: toma estas cifras solo como referencia muy general.")
 
-tab_precios, tab_entidades, tab_prov = st.tabs(["💰 Precios históricos", "🏛️ Entidades compradoras", "🏭 Proveedores adjudicados"])
+tab_precios, tab_entidades, tab_prov = st.tabs(["Precios históricos", "Entidades compradoras", "Proveedores adjudicados"])
 
 # ------------------------------------------------------------------ precios
 with tab_precios:
@@ -156,7 +159,7 @@ with tab_entidades:
 
     st.divider()
     todas = sorted(adj["entidad"].dropna().unique())
-    sel = st.selectbox("🔍 Revisar el comportamiento de una entidad", todas,
+    sel = st.selectbox("Revisar el comportamiento de una entidad", todas,
                        index=todas.index(ent["entidad"].iloc[0]) if len(ent) else 0, placeholder="Escribe el nombre…")
     e = adj[adj["entidad"] == sel]
     c1, c2, c3, c4 = st.columns(4)

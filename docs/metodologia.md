@@ -107,6 +107,5 @@ Confianza = Σ(pesos de criterios con información)          (los pesos suman 10
 - La IA no es 100 % determinista: la misma convocatoria puede variar algunos puntos entre evaluaciones
   (en pruebas, el mismo caso dio 94 % y 77 %, siempre en verde). Por eso se muestran la evidencia y la
   confianza, y cada resultado se guarda para no recalcularlo dentro de la sesión.
-- Sin cuentas de usuario: el perfil y las oportunidades guardadas viven en la sesión; se pueden descargar y
-  volver a cargar como JSON.
-- Alertas y carpeta digital: no implementadas (requieren usuarios, base de datos y almacenamiento seguro).
+- Alertas y carpeta digital: no implementadas. La carpeta digital requiere almacenamiento seguro de
+  documentos privados de la empresa, que no se debe improvisar.

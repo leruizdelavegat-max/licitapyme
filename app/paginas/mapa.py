@@ -31,8 +31,9 @@ with panel:
         palabras = comun.selector_palabras(st, "palabras_mapa")
         df = comun.enriquecer(comun.cargar_convocatorias(), {**p, "palabras_clave": palabras})
         solo_abiertas = st.toggle("Solo CONVOCADO", value=True, help="Procesos abiertos en el último corte de datos.")
-        niveles = st.multiselect("Compatibilidad", list(ui.ESTADOS), default=list(ui.ESTADOS),
-                                 format_func=lambda k: ui.ESTADOS[k]["etiqueta"])
+        niveles = st.pills("Compatibilidad", list(ui.ESTADOS), selection_mode="multi", default=list(ui.ESTADOS),
+                           format_func=lambda k: {"verde": "Alta", "amarillo": "Revisar", "rojo": "No cumple",
+                                                  "gris": "Sin evaluar"}[k])
         tipos = st.multiselect("Tipo", comun.TIPOS, default=p["tipos"], placeholder="Todos")
         deps = st.multiselect("Departamento", comun.DEPARTAMENTOS, format_func=str.title, placeholder="Todo el Perú")
         base_prov = df[df["departamento"].isin(deps)] if deps else df

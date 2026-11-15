@@ -24,8 +24,9 @@ with st.container(border=True):
     tipos = c1.multiselect("Tipo", comun.TIPOS, default=p["tipos"], placeholder="Todos")
     estados = c2.multiselect("Estado del proceso", sorted(df["estado"].dropna().unique()), default=["CONVOCADO"],
                              help="CONVOCADO = proceso abierto en el último corte de datos.", placeholder="Todos")
-    compat = c3.multiselect("Compatibilidad", list(ui.ESTADOS), format_func=lambda k: ui.ESTADOS[k]["etiqueta"],
-                            placeholder="Todas")
+    compat = c3.multiselect("Compatibilidad", list(ui.ESTADOS), placeholder="Todas",
+                            format_func=lambda k: {"verde": "Alta", "amarillo": "Revisar", "rojo": "No cumple",
+                                                   "gris": "Sin evaluar"}[k])
     monto_max = c4.number_input("Monto máximo (S/)", 0, 1_000_000_000, 0, step=100_000,
                                 help="0 = sin límite. Incluye las que no publican monto.")
     orden = c5.selectbox("Ordenar por", ["Relevancia", "Compatibilidad IA", "Más recientes", "Mayor monto", "Cierre de consultas"])

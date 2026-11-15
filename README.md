@@ -52,6 +52,14 @@ LicitaPYME responde 5 preguntas:
 
 ## 6. Demo
 
+### Experiencia de uso
+1. **La empresa se presenta**: asistente de 3 pasos (datos, productos y servicios, cobertura y capacidad). Cada paso se guarda: si cierras la app, continúas donde te quedaste.
+2. **La IA interpreta el perfil**: resume actividades y productos, y sugiere palabras clave y categorías del catálogo del Estado (CUBSO). Cada sugerencia se prueba contra las convocatorias reales y se descartan las que no encuentran nada. La IA no agrega experiencia ni capacidades que no declaraste.
+3. **Dashboard personalizado**: convocatorias abiertas, coincidencias, cobertura, evaluadas y altamente compatibles; recomendaciones de la IA con su razón; resumen por departamento; actividad reciente.
+4. **Explorar y decidir**: mapa, búsqueda, requisitos desde las bases, comparador y análisis del mercado.
+
+El perfil, las oportunidades guardadas, los estados, el historial y las evaluaciones se **guardan en una base de datos** y se recuerdan en la próxima visita. Una misma cuenta puede registrar **varias empresas** y cambiar entre ellas desde el menú lateral; los datos de cada una están separados. En la nube se ingresa con **Google**; también hay un modo de ejemplo sin registro. Guía de publicación: [docs/despliegue.md](docs/despliegue.md).
+
 ### Cómo correrlo en local
 ```bash
 pip install -r requirements.txt
@@ -62,8 +70,10 @@ streamlit run app/app.py
 ```
 Los archivos procesados ya están en `data/`, así que basta con el último paso para ver la app.
 
-**Pruebas:** `python -m pytest tests -q` abre las 6 secciones con 5 perfiles distintos (incluidos casos sin
-resultados o con un solo resultado) y verifica que ninguna se caiga. No consume la API de IA.
+**Pruebas:** `python -m pytest tests -q` (42 pruebas, base de datos temporal, sin consumir la API de IA):
+estados del perfil (nuevo, incompleto, confirmado), entrada directa al dashboard, crear, editar y cambiar
+de empresa, separación de datos entre empresas y usuarios, conservación de guardadas e historial al editar,
+y las 6 secciones con 5 perfiles distintos (incluidos casos sin resultados o con un solo resultado).
 
 ### Capturas
 _(pendiente: 3 capturas en `docs/` — mapa, evaluación con IA, análisis del mercado)_
@@ -74,8 +84,11 @@ flowchart LR
     A[Datos abiertos SEACE<br/>OCDS · OECE] -->|scripts/descargar_datos.py| B[(data/raw)]
     B -->|scripts/preparar_convocatorias.py| C[(convocatorias.parquet<br/>adjudicaciones.parquet)]
     G[Ubigeo RENIEC/INEI<br/>coordenadas] --> C
-    C --> D[App Streamlit<br/>6 páginas]
-    E[Perfil de la MYPE] --> D
+    C --> D[App Streamlit<br/>configuración + 6 secciones]
+    E[Perfil de la MYPE] --> P[ai/perfil.py<br/>interpretación]
+    P --> D
+    D <-->|app/db.py| DB[(PostgreSQL Supabase<br/>o SQLite local)]
+    L[Google · st.login] -->|app/sesion.py| D
     F[PDF de las bases] -->|pypdf| H[ai/requisitos.py]
     D --> I[ai/compatibilidad.py]
     H --> I
@@ -117,15 +130,18 @@ Construido con **Claude Code** como co-founder técnico:
 - Escribió la ingesta, el cruce con ubigeo y la tabla de adjudicaciones.
 - Diseñó e implementó la metodología de compatibilidad, la verificación de requisitos y el comparador.
 - Construyó las 6 páginas de la app y las probó en el navegador, corrigiendo errores (hilos sin contexto de Streamlit, respuestas de la IA cortadas por límite de tokens, mapa base que pedía API key).
+- Rediseñó la experiencia: configuración inicial con IA, persistencia en base de datos, inicio de sesión con Google, varias empresas por cuenta y sistema visual propio (Inter, azul marino, componentes en `app/ui.py`).
+- Al probar el flujo con una empresa de abarrotes detectó que "arroz" coincidía con "carrozable" (133 falsos positivos) y cambió la búsqueda a coincidencia por inicio de palabra.
+- Escribió 42 pruebas automáticas (`tests/`).
 
 Mis decisiones como founder: elegir el problema y el usuario, priorizar el alcance para la demo, validar con usuarios y definir el modelo de negocio.
 
 ## Limitaciones
-Ver la sección 7 de la [metodología](docs/metodologia.md): datos mensuales (corte 02/10/2026), sin lugar de ejecución ni fecha de ofertas en los datos abiertos, sin cuentas de usuario (perfil exportable a JSON), alertas y carpeta digital en la hoja de ruta.
+Ver la sección 7 de la [metodología](docs/metodologia.md): datos mensuales (corte 02/10/2026), sin lugar de ejecución ni fecha de ofertas en los datos abiertos, alertas y carpeta digital en la hoja de ruta.
 
 ## Qué sigue
 1. Fuente diaria del SEACE y **alertas** por correo/WhatsApp.
-2. Cuentas de usuario y **carpeta digital** segura que se compare con los requisitos.
+2. **Carpeta digital** segura de la empresa que se compare con los requisitos de las bases.
 3. OCR para bases escaneadas.
 
 ---

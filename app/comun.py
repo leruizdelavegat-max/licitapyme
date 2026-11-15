@@ -225,27 +225,39 @@ def guardar(ocid: str):
 
 
 # ------------------------------------------------------------------ evaluación con IA
-def evaluar(conv: dict, requisitos: list | None = None) -> dict | None:
-    """Evalúa una convocatoria con la metodología de compatibilidad y guarda el resultado."""
+def _evaluar_puro(conv: dict, p: dict, texto: str, requisitos: list | None) -> dict | None:
+    """Solo la llamada a la IA: no toca st.session_state, así puede correr en hilos."""
     from ai.compatibilidad import evaluar as evaluar_ia
 
-    p = perfil()
     try:
-        r = evaluar_ia(conv, p, texto_perfil(p), requisitos=requisitos)
+        return evaluar_ia(conv, p, texto, requisitos=requisitos)
     except Exception as e:  # red, cuota, clave… no debe tumbar la app
         print(f"[IA] fallo en {conv.get('ocid')}: {type(e).__name__}: {e}", file=sys.stderr)
         return None
+
+
+def evaluar(conv: dict, requisitos: list | None = None) -> dict | None:
+    """Evalúa una convocatoria con la metodología de compatibilidad y guarda el resultado."""
+    p = perfil()
+    r = _evaluar_puro(conv, p, texto_perfil(p), requisitos)
     if r is not None:
         evaluaciones()[conv["ocid"]] = r
     return r
 
 
 def evaluar_varias(filas: list[dict]) -> int:
+    """Evalúa en paralelo. El estado de la sesión se lee y escribe solo en el hilo principal."""
     from concurrent.futures import ThreadPoolExecutor
 
-    pendientes = [f for f in filas if f["ocid"] not in evaluaciones()]
+    p = perfil()
+    texto = texto_perfil(p)
+    ev = evaluaciones()
+    pendientes = [f for f in filas if f["ocid"] not in ev]
     with ThreadPoolExecutor(max_workers=6) as ex:
-        resultados = list(ex.map(evaluar, pendientes))
+        resultados = list(ex.map(lambda c: _evaluar_puro(c, p, texto, None), pendientes))
+    for c, r in zip(pendientes, resultados):
+        if r is not None:
+            ev[c["ocid"]] = r
     return sum(r is not None for r in resultados)
 
 

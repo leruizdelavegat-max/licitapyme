@@ -1,49 +1,129 @@
-# LicitaPYME
+# 📋 LicitaPYME
 
-> *Nombre provisional.*
+> **Ayudamos a las MYPE peruanas a encontrar, evaluar y priorizar contrataciones con el Estado, con IA que lee cada convocatoria y les dice si les conviene, cuánto se suele pagar y quién suele ganar.**
+
+🔗 **Demo:** _(pendiente: URL de Streamlit Cloud)_ · 🎥 **Video de respaldo:** _(pendiente)_ · 📐 [Metodología](docs/metodologia.md)
+
+---
 
 ## 1. One-liner
-Avisamos a las PYMES proveedoras del Estado a qué convocatorias del SEACE pueden postular, con IA que lee cada convocatoria y la compara con su perfil.
+Hacemos que una MYPE sepa **a qué convocatorias del Estado le conviene postular** mediante IA que evalúa su compatibilidad con datos abiertos del SEACE.
 
 ## 2. Founder
-**Luz Estefany Ruiz de la Vega Tenorio** — Universidad del Pacífico.
-_(foto, una línea sobre ti y por qué eres la persona indicada; cómo cubres producto, ingeniería, diseño y ventas con agentes de IA)_
+**Luz Estefany Ruiz de la Vega Tenorio** — estudiante de la Universidad del Pacífico.
+_(Pendiente: foto y una línea sobre por qué eres la persona indicada.)_
+
+Cómo cubro cada rol con agentes de IA:
+- **Producto y diseño:** definí el flujo con base en las conversaciones con usuarios; Claude Code prototipó las pantallas.
+- **Ingeniería:** Claude Code como co-founder técnico (ver sección 9).
+- **Ventas:** el propio producto genera el argumento de venta: "esta convocatoria es para ti, así se paga y estos ganan".
 
 ## 3. Problema
-_Pendiente: quién lo sufre con precisión, cuánto le cuesta, cómo lo resuelve hoy._
-Evidencia: notas de 3 conversaciones en [`docs/research/`](docs/research/).
+**Quién lo sufre:** micro y pequeñas empresas de servicios y bienes (limpieza, útiles, uniformes, mantenimiento) que quieren venderle al Estado pero no tienen un área de licitaciones.
+
+**Lo que dicen los datos** (SEACE, ago–oct 2026):
+- **13,455 procesos** publicados en solo dos meses y medio: imposible revisarlos a mano.
+- El **37 %** no publica el valor referencial: la MYPE no sabe si le alcanza la capacidad.
+- La búsqueda por palabras confunde: "limpieza" devuelve **obras de limpieza pública** o **geotextiles**.
+
+**Cómo lo resuelven hoy:** revisando el buscador del SEACE a mano, por avisos en WhatsApp o pagando a un tramitador.
+
+**Cuánto les cuesta:** _(pendiente: horas por semana y contratos perdidos, según tus 3 conversaciones)_.
+
+**Evidencia:** notas de 3 conversaciones en [`docs/research/`](docs/research/). _(pendiente)_
 
 ## 4. Solución e insight
-_Pendiente._
+LicitaPYME responde 5 preguntas:
+
+| Pregunta | Cómo |
+|---|---|
+| ¿Qué oportunidades hay para mi empresa? | Búsqueda por rubro oficial (CUBSO) + perfil de la empresa |
+| ¿Dónde están? | Mapa interactivo con agrupación y fichas |
+| ¿Qué tan compatible soy? | IA que evalúa 7 criterios con una **metodología fija y documentada** |
+| ¿Qué necesito para postular? | La IA lee las bases (PDF) y **verifica cada requisito contra el texto, con su página** |
+| ¿Cuál priorizo? | Comparador con IA + precios históricos, entidades y proveedores adjudicados |
+
+**Insight:** el SEACE es público pero ilegible. El valor no está en los datos, sino en traducirlos a "esta te conviene, por esto, y esto se suele pagar". Y la IA solo es útil si **no inventa**: por eso el porcentaje lo calcula una fórmula, la falta de información no se castiga y cada requisito se verifica contra el PDF.
 
 ## 5. Why now
-_Pendiente._
+- **Datos abiertos OCDS** del Estado peruano disponibles en formato estándar y masivo.
+- **LLMs baratos y con salida estructurada** (JSON validable): evaluar una convocatoria cuesta fracciones de céntimo.
+- **Agentes de código**: una sola persona puede construir esto en días.
 
 ## 6. Demo
-- URL: _pendiente_
-- Cómo correrlo en local:
 
+### Cómo correrlo en local
 ```bash
 pip install -r requirements.txt
-python scripts/descargar_datos.py      # descarga los datos abiertos del SEACE (OCDS)
-python scripts/preparar_convocatorias.py
+python scripts/descargar_datos.py          # datos abiertos del SEACE (~155 MB, no se suben al repo)
+python scripts/preparar_convocatorias.py   # genera data/convocatorias.parquet y data/adjudicaciones.parquet
+cp .env.example .env                       # y pon tu DEEPSEEK_API_KEY
 streamlit run app/app.py
 ```
+Los archivos procesados ya están en `data/`, así que basta con el último paso para ver la app.
 
-**Datos:** contrataciones públicas del SEACE publicadas por el OECE en el estándar
-Open Contracting (OCDS), obtenidas del [registro de datos de Open Contracting](https://data.open-contracting.org/es/publication/135).
+### Capturas
+_(pendiente: 3 capturas en `docs/` — mapa, evaluación con IA, análisis del mercado)_
 
-_Pendiente: 3 capturas y diagrama de arquitectura en `docs/`._
+### Arquitectura
+```mermaid
+flowchart LR
+    A[Datos abiertos SEACE<br/>OCDS · OECE] -->|scripts/descargar_datos.py| B[(data/raw)]
+    B -->|scripts/preparar_convocatorias.py| C[(convocatorias.parquet<br/>adjudicaciones.parquet)]
+    G[Ubigeo RENIEC/INEI<br/>coordenadas] --> C
+    C --> D[App Streamlit<br/>6 páginas]
+    E[Perfil de la MYPE] --> D
+    F[PDF de las bases] -->|pypdf| H[ai/requisitos.py]
+    D --> I[ai/compatibilidad.py]
+    H --> I
+    I -->|JSON validado con Pydantic| J[DeepSeek API]
+    D --> K[ai/comparador.py] --> J
+```
+
+### Modelos y APIs
+| Qué | Por qué |
+|---|---|
+| **DeepSeek** (`deepseek-flash`) vía API compatible con OpenAI, modo JSON | Muy barato para leer cientos de convocatorias; el JSON se valida con Pydantic |
+| **pypdf** | Extrae el texto de las bases para que la IA cite páginas y podamos verificar cada cita |
+| **Folium + MarkerCluster** | Mapa interactivo con agrupación de puntos |
+| **Plotly** | Gráficos de precios y entidades |
 
 ## 7. Modelo de negocio
-_Pendiente._
+| Plan | Precio | Para quién |
+|---|---|---|
+| Gratis | S/ 0 | 5 evaluaciones con IA al mes, búsqueda y mapa |
+| Pro | **S/ 49 / mes** | MYPE: evaluaciones ilimitadas, lectura de bases, comparador, análisis del mercado |
+| Consultor | **S/ 199 / mes** | Estudios contables y asesores con varias empresas cliente |
+
+**Costo por usuario:** cada evaluación usa ~1,000–1,100 tokens (medido en pruebas) y cada lectura de bases ~40,000. _(Pendiente: multiplicar por el precio vigente de DeepSeek en platform.deepseek.com y sumar el servidor)_. Un usuario Pro que evalúa 100 convocatorias y lee 10 bases al mes cuesta pocos soles: el margen de contribución es alto.
+
+**Argumento de venta:** si LicitaPYME te ayuda a ganar un contrato de limpieza (mediana adjudicada: ~S/ 488 mil), la suscripción anual se paga cientos de veces.
 
 ## 8. Herramientas del curso
 | Herramienta | Para qué | Dónde está |
 |---|---|---|
-| APIs / datos abiertos (sesión 03) | Ingesta de convocatorias del SEACE en formato OCDS | `scripts/` |
-| Dashboards (sesión 05) | Oportunidades por región, monto y fecha | `app/app.py` |
-| LLM con salidas estructuradas (sesión 08) | DeepSeek lee cada convocatoria y el perfil de la PYME y devuelve un JSON (resumen, puntaje de encaje 0-100, qué revisar, alerta) validado con Pydantic | `ai/analizar.py` |
+| **APIs y datos abiertos** (sesión 03) | Ingesta masiva de convocatorias y adjudicaciones del SEACE (OCDS) | [`scripts/`](scripts/) |
+| **Dashboards** (sesión 05) | Inicio, búsqueda y análisis del mercado | [`app/paginas/`](app/paginas/) |
+| **Mapas con Folium** (sesión 06) | Mapa de oportunidades con ubigeo y agrupación | [`app/paginas/mapa.py`](app/paginas/mapa.py) |
+| **LLMs con salidas estructuradas** (sesión 08) | Compatibilidad (7 criterios), requisitos y comparador, validados con Pydantic | [`ai/`](ai/) |
+| **Document AI** (sesión 10) | Lectura de las bases en PDF con verificación de citas | [`ai/requisitos.py`](ai/requisitos.py) |
 
 ## 9. Qué hizo el agente
-_Pendiente._
+Construido con **Claude Code** como co-founder técnico:
+- Exploró los datos OCDS y encontró qué campos sirven (y cuáles no: el "periodo de ofertas" no es una fecha límite).
+- Escribió la ingesta, el cruce con ubigeo y la tabla de adjudicaciones.
+- Diseñó e implementó la metodología de compatibilidad, la verificación de requisitos y el comparador.
+- Construyó las 6 páginas de la app y las probó en el navegador, corrigiendo errores (hilos sin contexto de Streamlit, respuestas de la IA cortadas por límite de tokens, mapa base que pedía API key).
+
+Mis decisiones como founder: elegir el problema y el usuario, priorizar el alcance para la demo, validar con usuarios y definir el modelo de negocio.
+
+## Limitaciones
+Ver la sección 7 de la [metodología](docs/metodologia.md): datos mensuales (corte 02/10/2026), sin lugar de ejecución ni fecha de ofertas en los datos abiertos, sin cuentas de usuario (perfil exportable a JSON), alertas y carpeta digital en la hoja de ruta.
+
+## Qué sigue
+1. Fuente diaria del SEACE y **alertas** por correo/WhatsApp.
+2. Cuentas de usuario y **carpeta digital** segura que se compare con los requisitos.
+3. OCR para bases escaneadas.
+
+---
+Datos: SEACE/OECE vía Open Contracting Partnership · Ubigeo: jmcastagnetto/ubigeo-peru-aumentado (MIT) · Licencia del código: MIT

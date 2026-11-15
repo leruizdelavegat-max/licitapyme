@@ -128,7 +128,7 @@ def ficha(c: dict) -> str:
     )
 
 
-m = folium.Map(location=[-9.2, -75.0], zoom_start=5, tiles="CartoDB positron", control_scale=True)
+m = folium.Map(location=[-9.2, -75.0], zoom_start=5, tiles="OpenStreetMap", control_scale=True, min_zoom=4)
 cluster = MarkerCluster(options={"spiderfyOnMaxZoom": True, "showCoverageOnHover": False}).add_to(m)
 for c in f.to_dict("records"):
     folium.Marker(
@@ -143,12 +143,18 @@ if lat0 is not None:
     folium.Marker([lat0, lon0], tooltip=f"Tu domicilio: {dom.title()}",
                   icon=folium.Icon(color="blue", icon="home", prefix="fa")).add_to(m)
 
+# Centro y zoom: todo el Perú, o el área de los lugares elegidos.
 if deps or provs or dists:
-    m.fit_bounds([[f["lat"].min(), f["lon"].min()], [f["lat"].max(), f["lon"].max()]])
+    centro = [(f["lat"].min() + f["lat"].max()) / 2, (f["lon"].min() + f["lon"].max()) / 2]
+    extension = max(f["lat"].max() - f["lat"].min(), f["lon"].max() - f["lon"].min(), 0.05)
+    zoom = int(max(5, min(13, 9 - __import__("math").log2(extension))))
+else:
+    centro, zoom = [-9.4, -75.0], 5
 
 col_mapa, col_lado = st.columns([3, 1])
 with col_mapa:
-    salida = st_folium(m, height=620, use_container_width=True, returned_objects=["last_object_clicked"], key="mapa")
+    salida = st_folium(m, height=620, width=None, center=centro, zoom=zoom,
+                       returned_objects=["last_object_clicked"], key="mapa")
 with col_lado:
     st.markdown("**Oportunidades por departamento**")
     por_dep = f.groupby("departamento").size().sort_values(ascending=True).rename("Oportunidades").reset_index()

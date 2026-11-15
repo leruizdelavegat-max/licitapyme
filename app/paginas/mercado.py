@@ -80,9 +80,9 @@ with tab_precios:
     q = d["monto_item"].quantile([0.25, 0.5, 0.75])
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Monto mediano por ítem", comun.soles(q[0.5]))
-    c2.metric("Rango típico (P25 – P75)", f"{comun.soles(q[0.25])} – {comun.soles(q[0.75])}")
-    c3.metric("Observaciones", f"{len(d):,}")
-    c4.metric("Entidades distintas", f"{d['entidad'].nunique():,}")
+    c2.metric("Rango típico: desde (P25)", comun.soles(q[0.25]), help="El 25 % de los ítems se adjudicó por menos de este monto.")
+    c3.metric("Rango típico: hasta (P75)", comun.soles(q[0.75]), help="El 75 % de los ítems se adjudicó por menos de este monto.")
+    c4.metric("Observaciones", f"{len(d):,}", help=f"{d['entidad'].nunique():,} entidades distintas")
     st.caption(
         "Usamos la **mediana** y el rango P25–P75 en lugar del promedio porque unos pocos contratos muy grandes "
         "distorsionan el promedio. El monto de un ítem depende de su duración, número de sedes y cantidad: "
@@ -90,9 +90,13 @@ with tab_precios:
     )
 
     g1, g2 = st.columns(2)
-    hist = px.histogram(d, x="monto_item", nbins=40, log_x=True, labels={"monto_item": "Monto adjudicado por ítem (S/, escala log)"},
-                        title="¿Cuánto se suele pagar?")
-    hist.update_layout(yaxis_title="Ítems", margin=dict(t=40))
+    # Histograma sobre log10 del monto: los montos van de miles a millones.
+    hist = px.histogram(x=np.log10(d["monto_item"]), nbins=40, title="¿Cuánto se suele pagar?")
+    marcas = list(range(int(np.floor(np.log10(d["monto_item"].min()))), int(np.ceil(np.log10(d["monto_item"].max()))) + 1))
+    etiqueta = {2: "S/ 100", 3: "S/ 1 mil", 4: "S/ 10 mil", 5: "S/ 100 mil", 6: "S/ 1 M", 7: "S/ 10 M", 8: "S/ 100 M", 9: "S/ 1,000 M"}
+    hist.update_xaxes(tickvals=marcas, ticktext=[etiqueta.get(m, f"10^{m}") for m in marcas], title="Monto adjudicado por ítem")
+    hist.add_vline(x=np.log10(q[0.5]), line_dash="dash", annotation_text="mediana")
+    hist.update_layout(yaxis_title="Ítems", margin=dict(t=40), bargap=0.05)
     g1.plotly_chart(hist, width="stretch")
 
     tri = d.assign(trimestre=d["fecha"].dt.to_period("Q").astype(str)).groupby("trimestre").agg(
@@ -131,7 +135,7 @@ with tab_precios:
         d.sort_values("fecha", ascending=False)[["fecha", "entidad", "departamento", "item", "cantidad", "unidad", "monto_item", "proveedor", "n_postores"]]
         .head(200).rename(columns={"fecha": "Fecha", "entidad": "Entidad", "departamento": "Departamento", "item": "Ítem",
                                    "cantidad": "Cantidad", "unidad": "Unidad", "monto_item": "Monto (S/)",
-                                   "proveedor": "Ganador", "n_postores": "Postores"}),
+                                   "proveedor": "Ganador", "n_postores": "Participantes registrados"}),
         hide_index=True, width="stretch",
         column_config={"Fecha": st.column_config.DateColumn(format="DD/MM/YYYY"), "Monto (S/)": st.column_config.NumberColumn(format="%,.0f")},
     )
@@ -203,8 +207,10 @@ with tab_prov:
     c1.metric("Proveedores adjudicados", f"{len(prov):,}")
     top5 = prov.nlargest(5, "monto")["participacion"].sum()
     c2.metric("Concentración: 5 mayores", f"{top5:.0f} % del monto")
-    c3.metric("Postores promedio por proceso", f"{d.drop_duplicates('ocid')['n_postores'].mean():.1f}"
-              if d["n_postores"].notna().any() else "Sin dato")
+    c3.metric("Participantes registrados por proceso (mediana)",
+              f"{d.drop_duplicates('ocid')['n_postores'].median():.0f}" if d["n_postores"].notna().any() else "Sin dato",
+              help="Empresas que se registraron como participantes en el SEACE. No todas presentan oferta: "
+                   "el dato de ofertas presentadas no viene en los datos abiertos.")
     st.caption("Si pocos proveedores concentran casi todo el monto, el mercado es más difícil de entrar.")
     st.dataframe(
         prov.head(40)[["nombre", "procesos", "monto", "participacion", "entidades", "departamentos"]].rename(columns={

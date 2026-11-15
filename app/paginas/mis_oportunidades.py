@@ -153,10 +153,14 @@ with tab_comp:
         if faltan:
             st.caption(f"{len(faltan)} sin evaluar: la comparación será mejor si las evalúas primero.")
         if st.button("🤖 ¿Cuál me conviene más?", type="primary", disabled=not comun.hay_ia()):
-            from ai.comparador import comparar
             if faltan:
-                with st.spinner("Evaluando las que faltan…"):
+                with st.spinner("Primero evalúo las que faltan…"):
                     comun.evaluar_varias([mis.set_index("ocid").loc[o].to_dict() | {"ocid": o} for o in faltan])
+            # Recargar la página para que la tabla incluya las evaluaciones nuevas antes de comparar.
+            st.session_state["comparar_ahora"] = True
+            st.rerun()
+        if st.session_state.pop("comparar_ahora", False):
+            from ai.comparador import comparar
             with st.spinner("Comparando…"):
                 st.session_state["comparacion"] = comparar(comun.texto_perfil(p), [{"codigo": k, **v} for k, v in filas.items()])
         comp = st.session_state.get("comparacion")

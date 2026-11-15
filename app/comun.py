@@ -179,6 +179,29 @@ def texto_perfil(p: dict) -> str:
 
 
 # ------------------------------------------------------------------ búsqueda
+def selector_palabras(contenedor, clave_widget: str) -> list[str]:
+    """Campo "¿Qué buscas?" compartido: Buscar y Mapa usan las mismas palabras.
+
+    Arranca con las palabras del perfil y recuerda lo que la persona escriba
+    (en `palabras_busqueda`), aunque cambie de sección.
+    """
+    p = perfil()
+    actuales = st.session_state.setdefault("palabras_busqueda", list(p["palabras_clave"]))
+    opciones = sorted(set(p["palabras_clave"]) | set(actuales))
+    palabras = contenedor.multiselect(
+        "¿Qué buscas? 🔍",
+        options=opciones,
+        default=actuales,
+        accept_new_options=True,
+        key=clave_widget,
+        placeholder="Escribe una palabra y presiona Enter",
+        help="Empieza con las palabras de tu perfil. Escribe otra y presiona Enter para agregarla. "
+        "Se mantiene igual en Buscar y en el Mapa.",
+    )
+    st.session_state["palabras_busqueda"] = palabras
+    return palabras
+
+
 def puntuar_palabras(df: pd.DataFrame, claves: list[str]) -> pd.Series:
     """Coincidir en el rubro oficial (CUBSO/UNSPSC) pesa el doble que en la descripción."""
     claves = [normalizar(c) for c in claves if c and c.strip()]

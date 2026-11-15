@@ -19,14 +19,13 @@ st.caption(
 )
 
 p = comun.perfil()
-df = comun.enriquecer(comun.cargar_convocatorias(), p)
 
 # ------------------------------------------------------------------ filtros
 with st.container(border=True):
-    c1, c2, c3 = st.columns([2, 2, 2])
-    solo_perfil = c1.toggle("Solo las que coinciden con mi perfil", value=True,
-                            help="Usa las palabras clave de tu perfil.")
-    solo_abiertas = c2.toggle("Solo en estado CONVOCADO", value=True)
+    c1, c2, c3 = st.columns([3, 1.5, 2])
+    palabras = comun.selector_palabras(c1, "palabras_mapa")
+    solo_abiertas = c2.toggle("Solo CONVOCADO", value=True, help="Procesos abiertos en el último corte de datos.")
+    df = comun.enriquecer(comun.cargar_convocatorias(), {**p, "palabras_clave": palabras})
     niveles = c3.multiselect(
         "Nivel de compatibilidad", list(comun.SEMAFORO),
         default=list(comun.SEMAFORO), format_func=lambda k: f"{comun.SEMAFORO[k]['icono']} {comun.SEMAFORO[k]['texto']}",
@@ -56,31 +55,34 @@ with st.container(border=True):
     rango_cons = c2.date_input("Fin de consultas (si está disponible)", (), format="DD/MM/YYYY",
                                help="Única fecha del cronograma que viene en los datos abiertos.")
 
-f = df
-if solo_perfil:
-    f = f[f["coincidencia"] > 0]
-if solo_abiertas:
-    f = f[f["estado"] == "CONVOCADO"]
-if niveles:
-    f = f[f["semaforo"].isin(niveles)]
-if deps:
-    f = f[f["departamento"].isin(deps)]
-if provs:
-    f = f[f["provincia"].isin(provs)]
-if dists:
-    f = f[f["distrito"].isin(dists)]
-if tipos:
-    f = f[f["categoria"].isin(tipos)]
-if rubro:
-    clave = comun.normalizar(rubro)
-    f = f[f["texto_rubro"].str.contains(clave, regex=False) | f["texto_desc"].str.contains(clave, regex=False)]
+# Se aplican los filtros uno por uno y se anota cuántas quedan después de cada uno,
+# para poder explicar qué filtro dejó el mapa vacío.
 lo, hi = montos
-en_rango = f["monto_soles"].between(lo, hi)
-f = f[en_rango | (f["monto_soles"].isna() & incluir_sin_monto)]
-if isinstance(rango_pub, tuple) and len(rango_pub) == 2:
-    f = f[f["fecha_publicacion"].dt.date.between(*rango_pub)]
-if isinstance(rango_cons, tuple) and len(rango_cons) == 2:
-    f = f[f["consultas_fin"].dt.date.between(*rango_cons)]
+clave_rubro = comun.normalizar(rubro) if rubro else ""
+pasos = [
+    ("¿Qué buscas?", bool(palabras), lambda d: d[d["coincidencia"] > 0]),
+    ("Solo CONVOCADO", solo_abiertas, lambda d: d[d["estado"] == "CONVOCADO"]),
+    ("Tipo", bool(tipos), lambda d: d[d["categoria"].isin(tipos)]),
+    ("Nivel de compatibilidad", bool(niveles), lambda d: d[d["semaforo"].isin(niveles)]),
+    ("Departamento", bool(deps), lambda d: d[d["departamento"].isin(deps)]),
+    ("Provincia", bool(provs), lambda d: d[d["provincia"].isin(provs)]),
+    ("Distrito", bool(dists), lambda d: d[d["distrito"].isin(dists)]),
+    ("Categoría o rubro", bool(clave_rubro), lambda d: d[d["texto_rubro"].str.contains(clave_rubro, regex=False)
+                                                       | d["texto_desc"].str.contains(clave_rubro, regex=False)]),
+    ("Valor referencial", True, lambda d: d[d["monto_soles"].between(lo, hi) | (d["monto_soles"].isna() & incluir_sin_monto)]),
+    ("Fecha de publicación", isinstance(rango_pub, tuple) and len(rango_pub) == 2,
+     lambda d: d[d["fecha_publicacion"].dt.date.between(*rango_pub)]),
+    ("Fin de consultas", isinstance(rango_cons, tuple) and len(rango_cons) == 2,
+     lambda d: d[d["consultas_fin"].dt.date.between(*rango_cons)]),
+]
+f, vacio_por = df, None
+for nombre, activo, filtro in pasos:
+    if not activo:
+        continue
+    antes = len(f)
+    f = filtro(f)
+    if antes and f.empty and vacio_por is None:
+        vacio_por = (nombre, antes)
 f = f.dropna(subset=["lat", "lon"])
 
 # ------------------------------------------------------------------ KPIs
@@ -91,7 +93,12 @@ c3.metric("🟢 Alta compatibilidad", f"{int((f['semaforo'] == 'verde').sum())}"
 c4.metric("⚪ Sin evaluar", f"{int((f['semaforo'] == 'gris').sum())}")
 
 if f.empty:
-    st.info("No hay oportunidades con esos filtros.")
+    if vacio_por:
+        nombre, antes = vacio_por
+        st.warning(f"Había **{antes}** oportunidades hasta que se aplicó el filtro **{nombre}**, que las dejó en 0. "
+                   "Ajusta ese filtro para verlas en el mapa.")
+    else:
+        st.info("Ninguna convocatoria coincide con lo que buscas. Prueba con otras palabras en «¿Qué buscas?».")
     st.stop()
 
 LIMITE = 2000

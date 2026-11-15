@@ -87,6 +87,7 @@ with st.form("form_perfil"):  # no usar "perfil": esa clave guarda los datos en 
         }
         # El perfil cambió: las evaluaciones anteriores ya no aplican.
         st.session_state["evaluaciones"] = {}
+        st.session_state.pop("palabras_busqueda", None)  # la búsqueda vuelve a las palabras del perfil nuevo
         st.session_state["_perfil_guardado"] = True
         st.rerun()  # para que la barra lateral y las demás secciones usen el perfil nuevo
 

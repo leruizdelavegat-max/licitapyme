@@ -14,13 +14,7 @@ df = comun.cargar_convocatorias()
 # ------------------------------------------------------------------ filtros
 with st.container(border=True):
     c1, c2 = st.columns([3, 2])
-    palabras = c1.multiselect(
-        "¿Qué buscas? 🔍",
-        options=sorted(set(p["palabras_clave"])),
-        default=p["palabras_clave"],
-        accept_new_options=True,
-        help="Viene de tu perfil. Escribe otra palabra y presiona Enter para agregarla.",
-    )
+    palabras = comun.selector_palabras(c1, "palabras_buscar")
     deps = c2.multiselect(
         "Departamento de la entidad 🔍", comun.DEPARTAMENTOS, format_func=str.title,
         placeholder="Todos (tu cobertura aparece primero)",

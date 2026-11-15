@@ -35,6 +35,23 @@ def test_pagina_no_se_cae(pagina, nombre_perfil):
     assert not at.exception, f"{pagina} con perfil '{nombre_perfil}': {at.exception[0].message if at.exception else ''}"
 
 
+def test_buscar_y_mapa_usan_la_misma_busqueda():
+    """Lo que se escribe en «¿Qué buscas?» vale para Buscar y Mapa (antes el mapa usaba solo el perfil)."""
+    conteos = {}
+    for pagina in ["buscar.py", "mapa.py"]:
+        at = AppTest.from_file(str(RAIZ / "app" / "app.py"), default_timeout=120)
+        # Perfil de limpieza, pero la persona busca "abarrotes" (que son Bienes).
+        at.session_state["perfil"] = {**comun.PERFIL_DEMO, "tipos": ["Bienes", "Servicios"]}
+        at.session_state["palabras_busqueda"] = ["abarrotes"]
+        at.run()
+        at.switch_page(f"paginas/{pagina}").run()
+        assert not at.exception
+        conteos[pagina] = int(at.metric[0].value.replace(",", ""))
+    assert conteos["mapa.py"] > 0, "el mapa no muestra las convocatorias de abarrotes"
+    # El mapa tiene filtros extra (fecha), así que puede mostrar menos, nunca más que Buscar.
+    assert conteos["mapa.py"] <= conteos["buscar.py"], f"el mapa no usa la misma búsqueda: {conteos}"
+
+
 def test_pagina_con_guardadas():
     """Mis oportunidades con convocatorias guardadas (tabla, requisitos y comparador)."""
     at = AppTest.from_file(str(RAIZ / "app" / "app.py"), default_timeout=120)

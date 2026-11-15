@@ -62,6 +62,9 @@ streamlit run app/app.py
 ```
 Los archivos procesados ya están en `data/`, así que basta con el último paso para ver la app.
 
+**Pruebas:** `python -m pytest tests -q` abre las 6 secciones con 5 perfiles distintos (incluidos casos sin
+resultados o con un solo resultado) y verifica que ninguna se caiga. No consume la API de IA.
+
 ### Capturas
 _(pendiente: 3 capturas en `docs/` — mapa, evaluación con IA, análisis del mercado)_
 

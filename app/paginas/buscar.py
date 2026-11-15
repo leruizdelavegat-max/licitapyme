@@ -77,7 +77,12 @@ if comun.hay_ia():
             "y calcula un % de compatibilidad con una metodología fija (ver el detalle en cada tarjeta)."
         )
         c1, c2 = st.columns([3, 1])
-        n = c1.slider("¿Cuántas de las primeras evaluar?", 1, min(15, len(f)), min(5, len(f)))
+        tope = min(15, len(f))
+        if tope > 1:
+            n = c1.slider("¿Cuántas de las primeras evaluar?", 1, tope, min(5, tope))
+        else:  # un slider con mínimo = máximo da error en Streamlit
+            n = 1
+            c1.caption("Hay 1 convocatoria con estos filtros.")
         if c2.button(f"Evaluar {n} con IA", type="primary", width="stretch"):
             with st.spinner(f"La IA está leyendo {n} convocatorias…"):
                 ok = comun.evaluar_varias(f.head(n).to_dict("records"))

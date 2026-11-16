@@ -111,7 +111,22 @@ flowchart LR
 | Pro | **S/ 49 / mes** | MYPE: evaluaciones ilimitadas, lectura de bases, comparador, análisis del mercado |
 | Consultor | **S/ 199 / mes** | Estudios contables y asesores con varias empresas cliente |
 
-**Costo por usuario:** cada evaluación usa ~1,000–1,100 tokens (medido en pruebas) y cada lectura de bases ~40,000. _(Pendiente: multiplicar por el precio vigente de DeepSeek en platform.deepseek.com y sumar el servidor)_. Un usuario Pro que evalúa 100 convocatorias y lee 10 bases al mes cuesta pocos soles: el margen de contribución es alto.
+**Costo por usuario (plan Pro, estimado).** Tokens medidos en pruebas; precio de DeepSeek `deepseek-flash` en horario pico
+(el más caro): USD 0.30 por millón de tokens de entrada y USD 1.20 por millón de salida. Tipo de cambio ~S/ 3.75.
+
+| Uso mensual de un usuario Pro | Tokens por uso (entrada / salida) | Costo |
+|---|---|---|
+| 100 evaluaciones de compatibilidad | ~600 / ~1,000 | ~S/ 0.52 |
+| 10 lecturas de bases en PDF | ~40,000 / ~3,000 | ~S/ 0.59 |
+| 10 comparaciones + 2 análisis de perfil | ~2,000 / ~1,500 | ~S/ 0.10 |
+| **IA total** | | **~S/ 1.20** |
+| Servidor y base de datos (Supabase Pro USD 25 repartido en 100 usuarios) | | ~S/ 0.95 |
+| Comisión de cobro con tarjeta (~4 %) | | ~S/ 1.96 |
+| **Costo total por usuario** | | **~S/ 4.10** |
+
+**Margen de contribución: ~S/ 45 de S/ 49 (~92 %).** Con el plan Gratis limitado a 5 evaluaciones, un usuario
+gratuito cuesta menos de S/ 0.05 al mes en IA. Precios de la API según la página oficial de DeepSeek (verificar
+antes de escalar: cambian con cada versión del modelo).
 
 **Argumento de venta:** si LicitaPYME te ayuda a ganar un contrato de limpieza (mediana adjudicada: ~S/ 488 mil), la suscripción anual se paga cientos de veces.
 

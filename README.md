@@ -2,7 +2,7 @@
 
 > **Ayudamos a las MYPE peruanas a encontrar, evaluar y priorizar contrataciones con el Estado, con IA que lee cada convocatoria y les dice si les conviene, cuánto se suele pagar y quién suele ganar.**
 
-🔗 **Demo:** _(pendiente: URL de Streamlit Cloud)_ · 🎥 **Video de respaldo:** _(pendiente)_ · 📐 [Metodología](docs/metodologia.md)
+🔗 **Demo:** https://licitapyme-emfn6lybxg7lpexwrdbzxz.streamlit.app/ · 🎥 **Video de respaldo:** _(pendiente)_ · 📐 [Metodología](docs/metodologia.md)
 
 ---
 

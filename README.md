@@ -10,8 +10,14 @@
 Hacemos que una MYPE sepa **a qué convocatorias del Estado le conviene postular** mediante IA que evalúa su compatibilidad con datos abiertos del SEACE.
 
 ## 2. Founder
+<img src="docs/founder.jpg" alt="Luz Estefany Ruiz de la Vega Tenorio" width="150" align="left" style="margin-right:16px">
+
 **Luz Estefany Ruiz de la Vega Tenorio** — estudiante de la Universidad del Pacífico.
-_(Pendiente: foto y una línea sobre por qué eres la persona indicada.)_
+
+**Por qué yo:** trabajo en una empresa que ejecuta un proyecto de conectividad rural financiado y supervisado por el Estado, así que veo de cerca cómo se contrata en el sector público: plazos, bases, requisitos y aprobaciones. Sé lo difícil que es entender esas reglas incluso para una empresa grande; para una MYPE sin área de licitaciones, es casi imposible. Uno mi experiencia con el sector público con lo que aprendí de datos e IA para traducir el SEACE en decisiones simples.
+
+<br clear="left">
+
 
 Cómo cubro cada rol con agentes de IA:
 - **Producto y diseño:** definí el flujo con base en las conversaciones con usuarios; Claude Code prototipó las pantallas.

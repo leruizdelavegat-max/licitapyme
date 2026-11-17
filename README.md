@@ -152,7 +152,7 @@ antes de escalar: cambian con cada versión del modelo).
 | **APIs y datos abiertos** (sesión 03) | Ingesta masiva de convocatorias y adjudicaciones del SEACE (OCDS) | [`scripts/`](scripts/) |
 | **Dashboards** (sesión 05) | Inicio, búsqueda y análisis del mercado | [`app/paginas/`](app/paginas/) |
 | **Mapas con Folium** (sesión 06) | Mapa de oportunidades con ubigeo y agrupación | [`app/paginas/mapa.py`](app/paginas/mapa.py) |
-| **LLMs con salidas estructuradas** (sesión 08) | Compatibilidad (7 criterios), requisitos y comparador, validados con Pydantic | [`ai/`](ai/) |
+| **LLMs con salidas estructuradas** (sesión 08) | Compatibilidad (7 criterios), interpretación del perfil, requisitos, comparador y carta de presentación (Premium), validados con Pydantic | [`ai/`](ai/) |
 | **Document AI** (sesión 10) | Lectura de las bases en PDF con verificación de citas | [`ai/requisitos.py`](ai/requisitos.py) |
 
 ## 9. Qué hizo el agente

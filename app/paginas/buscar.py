@@ -52,8 +52,7 @@ if not ver_descartadas and "rojo" not in compat:
     f = f[f["semaforo"] != "rojo"]
 
 orden_cols = {
-    "Relevancia": (["prioridad", "compatibilidad", "en_cobertura", "coincidencia", "fecha_publicacion"],
-                   [True, False, False, False, False]),
+    "Relevancia": (["prioridad", "compatibilidad", "relevancia", "fecha_publicacion"], [True, False, False, False]),
     "Compatibilidad IA": (["prioridad", "compatibilidad", "coincidencia"], [True, False, False]),
     "Más recientes": (["fecha_publicacion"], [False]),
     "Mayor monto": (["monto_soles"], [False]),

@@ -15,7 +15,7 @@ candidatas = del_tipo[del_tipo["coincidencia"] > 0]
 # Las que la IA descartó (rojas) no se muestran en el Inicio: no estorban.
 descartadas = candidatas[candidatas["semaforo"] == "rojo"]
 coinciden = candidatas[candidatas["semaforo"] != "rojo"].sort_values(
-    ["prioridad", "en_cobertura", "coincidencia", "fecha_publicacion"], ascending=[True, False, False, False])
+    ["prioridad", "relevancia", "fecha_publicacion"], ascending=[True, False, False])
 ev = comun.evaluaciones(solo_vigentes=True)
 evaluadas = coinciden[coinciden["ocid"].isin(ev)]
 altas = evaluadas[evaluadas["semaforo"] == "verde"]

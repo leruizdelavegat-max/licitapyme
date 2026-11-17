@@ -308,11 +308,11 @@ def contiene(serie: pd.Series, clave: str) -> pd.Series:
 
 
 def puntuar_palabras(df: pd.DataFrame, claves: list[str]) -> pd.Series:
-    """Coincidir en el rubro oficial (CUBSO/UNSPSC) pesa el doble que en la descripción."""
+    """Coincidir en el rubro oficial (CUBSO/UNSPSC) pesa el triple que en la descripción."""
     claves = [normalizar(c) for c in claves if c and c.strip()]
     if not claves:
         return pd.Series(0, index=df.index)
-    return sum(2 * contiene(df["texto_rubro"], c) + contiene(df["texto_desc"], c) for c in claves)
+    return sum(3 * contiene(df["texto_rubro"], c) + contiene(df["texto_desc"], c) for c in claves)
 
 
 def enriquecer(df: pd.DataFrame, p: dict) -> pd.DataFrame:
@@ -334,6 +334,9 @@ def enriquecer(df: pd.DataFrame, p: dict) -> pd.DataFrame:
     df["compatibilidad"] = df["ocid"].map(lambda o: ev[o]["puntaje"] if o in ev else None)
     # Orden de prioridad: compatibles primero, luego sin evaluar y al final las descartadas por la IA.
     df["prioridad"] = df["semaforo"].map(PRIORIDAD)
+    # Relevancia: qué tan fuerte es la coincidencia (rubro oficial > descripción) + un plus por estar en cobertura.
+    # La cobertura suma, pero no debe poner arriba una coincidencia débil (p. ej. "arroz" de pasada en una trilladora).
+    df["relevancia"] = df["coincidencia"] + 1.5 * df["en_cobertura"].astype(float)
     return df
 
 

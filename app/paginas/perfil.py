@@ -33,7 +33,8 @@ if guardado:
                    "rubro anterior). Revísalos en la pestaña **Productos y servicios**.", icon=":material/warning:")
 
 tab_datos, tab_oferta, tab_cob, tab_ia, tab_datos_exp = st.tabs(
-    ["Datos", "Productos y servicios", "Cobertura y capacidad", "Interpretación de la IA", "Mis datos"])
+    ["Datos", "Productos y servicios", "Cobertura y capacidad", "Interpretación de la IA", "Mis datos"],
+    key="tabs_perfil", on_change="rerun")
 
 
 def guardar(nuevos: dict, paso: int, reinterpretar: bool = True):

@@ -60,6 +60,20 @@ def hay_ia() -> bool:
     return bool(os.getenv("DEEPSEEK_API_KEY"))
 
 
+def mensaje_error_ia(ex: Exception) -> str:
+    """Explica en lenguaje simple por qué falló la IA (sin mostrar claves)."""
+    nombre, texto = type(ex).__name__, str(ex).lower()
+    if "authentication" in nombre.lower() or "401" in texto or "invalid" in texto and "key" in texto:
+        return "La clave de la IA no es válida (fue eliminada o es incorrecta). Revisa DEEPSEEK_API_KEY en los Secrets."
+    if "insufficient" in texto or "402" in texto or "balance" in texto:
+        return "La cuenta de la IA no tiene saldo. Recarga en platform.deepseek.com."
+    if "rate" in texto or "429" in texto:
+        return "La IA recibió demasiadas solicitudes. Espera un momento e intenta de nuevo."
+    if "timeout" in nombre.lower() or "connect" in nombre.lower():
+        return "No se pudo conectar con la IA (red o tiempo de espera). Intenta de nuevo."
+    return f"La IA no respondió ({nombre}). Intenta de nuevo."
+
+
 # ------------------------------------------------------------------ utilidades
 def normalizar(s) -> str:
     """Mayúsculas y sin tildes, para que 'útiles' encuentre 'UTILES'."""
@@ -352,7 +366,11 @@ def _evaluar_puro(conv: dict, p: dict, texto: str, requisitos: list | None) -> d
         return evaluar_ia(conv, p, texto, requisitos=requisitos)
     except Exception as ex:  # red, cuota, clave… no debe tumbar la app
         print(f"[IA] fallo en {conv.get('ocid')}: {type(ex).__name__}: {ex}", file=sys.stderr)
+        ULTIMO_ERROR_IA["mensaje"] = mensaje_error_ia(ex)
         return None
+
+
+ULTIMO_ERROR_IA: dict = {}  # se llena desde los hilos; la página lo muestra en el hilo principal
 
 
 def evaluar(conv: dict, requisitos: list | None = None) -> dict | None:
@@ -380,7 +398,10 @@ def evaluar_varias(filas: list[dict]) -> int:
         if r is not None:
             db.guardar_evaluacion(eid, c["ocid"], v, r)
     invalidar("evaluaciones")
-    return sum(r is not None for r in resultados)
+    ok = sum(r is not None for r in resultados)
+    if pendientes and ok == 0 and ULTIMO_ERROR_IA.get("mensaje"):
+        st.session_state["_ia_error"] = ULTIMO_ERROR_IA.pop("mensaje")
+    return ok
 
 
 # ------------------------------------------------------------------ componentes de convocatoria

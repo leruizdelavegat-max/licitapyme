@@ -130,9 +130,13 @@ def contar_coincidencias(palabra: str) -> int:
 def ejecutar_interpretacion(p: dict, actividad_anterior: str | None = None) -> dict | None:
     from ai.perfil import interpretar
     try:
-        return interpretar(comun.texto_perfil(p), p["palabras_clave"], actividad_anterior)
+        r = interpretar(comun.texto_perfil(p), p["palabras_clave"], actividad_anterior)
+        if r is None:
+            st.session_state["_ia_error"] = "La IA respondió en un formato inesperado. Intenta de nuevo."
+        return r
     except Exception as ex:
         print(f"[IA] perfil: {type(ex).__name__}: {ex}")
+        st.session_state["_ia_error"] = comun.mensaje_error_ia(ex)
         return None
 
 
@@ -193,6 +197,8 @@ def vista_analisis(emp: dict, al_confirmar_texto: str, automatico: bool = True) 
     if analisis is None and comun.hay_ia() and pedir:
         with st.spinner("La IA está interpretando tu perfil…"):
             analisis = ejecutar_interpretacion(p)
+        if not analisis and st.session_state.get("_ia_error"):
+            st.error(st.session_state.pop("_ia_error"), icon=":material/error:")
         if analisis:
             import db
             db.actualizar_empresa(emp["id"], emp["usuario_id"], analisis=analisis)

@@ -120,4 +120,8 @@ with st.sidebar:
         st.caption("Modo local: los datos se guardan en este equipo"
                    + (" (base en la nube)." if db.es_nube() else "."))
 
+error_ia = st.session_state.pop("_ia_error", None)
+if error_ia:
+    st.error(error_ia, icon=":material/error:")
+
 nav.run()

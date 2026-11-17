@@ -26,11 +26,17 @@ Cómo cubro cada rol con agentes de IA:
 - El **37 %** no publica el valor referencial: la MYPE no sabe si le alcanza la capacidad.
 - La búsqueda por palabras confunde: "limpieza" devuelve **obras de limpieza pública** o **geotextiles**.
 
-**Cómo lo resuelven hoy:** revisando el buscador del SEACE a mano, por avisos en WhatsApp o pagando a un tramitador.
+**Cómo lo resuelven hoy:** revisando a mano las plataformas o las páginas de cada municipalidad, y sobre todo por contactos: *"Entre empresarios nos pasamos la voz cuando sabemos que una entidad está buscando algún producto"* (conversación 1, empresa proveedora de municipalidades). Quien recién empieza y no tiene contactos queda en desventaja.
 
-**Cuánto les cuesta:** _(pendiente: horas por semana y contratos perdidos, según tus 3 conversaciones)_.
+**Cuánto les cuesta:**
+- **Tiempo perdido** revisando convocatorias que al final no pueden atender por cantidad, especificaciones o lugar de entrega: *"A mí me ayudaría a no perder tiempo revisando convocatorias que al final no puedo atender."*
+- **Oportunidades perdidas** por no enterarse a tiempo. En limpieza de oficinas, un contrato adjudicado tiene una mediana de **~S/ 488 mil** (datos del SEACE, 2024–2026).
+- _Pendiente: cuantificar horas por semana con más conversaciones._
 
-**Evidencia:** notas de 3 conversaciones en [`docs/research/`](docs/research/). _(pendiente)_
+**Evidencia** (en [`docs/research/`](docs/research/)):
+- [Conversación 1](docs/research/01-proveedora-municipal.md): persona con una empresa que vende a municipalidades y conoce a proveedores de varios rubros (WhatsApp, 16/11/2026).
+- [Investigación documental](docs/research/investigacion_documental.md): perfiles de MYPE (cereales para Vaso de Leche, distribuidora de alimentos, ferretería) construidos con información pública. **No son entrevistas**: son hipótesis para contrastar.
+- Conversaciones adicionales en curso.
 
 ## 4. Solución e insight
 LicitaPYME responde 5 preguntas:
@@ -105,11 +111,16 @@ flowchart LR
 | **Plotly** | Gráficos de precios y entidades |
 
 ## 7. Modelo de negocio
-| Plan | Precio | Para quién |
-|---|---|---|
-| Gratis | S/ 0 | 5 evaluaciones con IA al mes, búsqueda y mapa |
-| Pro | **S/ 49 / mes** | MYPE: evaluaciones ilimitadas, lectura de bases, comparador, análisis del mercado |
-| Consultor | **S/ 199 / mes** | Estudios contables y asesores con varias empresas cliente |
+| Plan | Precio | Para quién | Qué incluye |
+|---|---|---|---|
+| Básico | **S/ 15 / mes** | MYPE que recién empieza a venderle al Estado | Búsqueda por rubro, mapa y 10 evaluaciones con IA al mes |
+| Pro | **S/ 49 / mes** | MYPE que ya postula | Evaluaciones ilimitadas, lectura de bases, comparador y análisis del mercado |
+| Consultor | **S/ 199 / mes** | Estudios contables y asesores | Todo lo de Pro para varias empresas cliente |
+
+**Por qué estos precios:** en la [conversación 1](docs/research/01-proveedora-municipal.md), una persona que vende a
+municipalidades propuso *"unos 15 soles al mes, para probar"* para quien recién empieza y *"unos 50 soles. Incluso 60"*
+para quien ya consigue contratos, en **tres planes** (básico, intermedio y premium). La investigación documental
+apunta al mismo rango.
 
 **Costo por usuario (plan Pro, estimado).** Tokens medidos en pruebas; precio de DeepSeek `deepseek-flash` en horario pico
 (el más caro): USD 0.30 por millón de tokens de entrada y USD 1.20 por millón de salida. Tipo de cambio ~S/ 3.75.
@@ -124,8 +135,8 @@ flowchart LR
 | Comisión de cobro con tarjeta (~4 %) | | ~S/ 1.96 |
 | **Costo total por usuario** | | **~S/ 4.10** |
 
-**Margen de contribución: ~S/ 45 de S/ 49 (~92 %).** Con el plan Gratis limitado a 5 evaluaciones, un usuario
-gratuito cuesta menos de S/ 0.05 al mes en IA. Precios de la API según la página oficial de DeepSeek (verificar
+**Margen de contribución del plan Pro: ~S/ 45 de S/ 49 (~92 %).** En el plan Básico, 10 evaluaciones cuestan
+~S/ 0.05 en IA; con servidor (~S/ 0.95) y comisión (~S/ 0.60), el costo es ~S/ 1.60 y el margen ~S/ 13.40 (~89 %). Precios de la API según la página oficial de DeepSeek (verificar
 antes de escalar: cambian con cada versión del modelo).
 
 **Argumento de venta:** si LicitaPYME te ayuda a ganar un contrato de limpieza (mediana adjudicada: ~S/ 488 mil), la suscripción anual se paga cientos de veces.

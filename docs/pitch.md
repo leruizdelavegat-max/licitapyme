@@ -10,8 +10,8 @@ evaluadas y 2 guardadas), segunda pestaña con el **Mapa**, pantalla compartida 
 
 ## 0:00 – 0:30 · El problema
 > "En solo dos meses el Estado publicó más de **13 mil procesos** de compra en el SEACE. Una MYPE que quiere
-> venderle al Estado tendría que revisarlos uno por uno. [Una dueña de una empresa de ___ me dijo: *'___'*.]
-> Hoy lo resuelven a mano, por WhatsApp o pagándole a un tramitador. Y aunque encuentren la convocatoria,
+> venderle al Estado tendría que revisarlos uno por uno. Una persona que le vende a municipalidades me dijo:
+> *'Entre empresarios nos pasamos la voz'*: hoy se enteran por contactos, y quien recién empieza queda fuera. Y aunque encuentren la convocatoria,
 > no saben si les conviene, cuánto se suele pagar ni quién suele ganar."
 
 ## 0:30 – 2:30 · Demo (un caso real, de principio a fin)
@@ -26,8 +26,9 @@ evaluadas y 2 guardadas), segunda pestaña con el **Mapa**, pantalla compartida 
 | 2:20 | (Opcional, si sobra tiempo) **Mis oportunidades → Comparador** | "Guardo dos y la IA me dice cuál priorizar, sin confundir el mayor monto con la mayor rentabilidad." |
 
 ## 2:30 – 3:00 · El negocio
-> "Cobramos **S/ 49 al mes** a la MYPE y **S/ 199** a contadores con varias empresas. Cada usuario nos cuesta
-> unos **S/ 4** en IA, servidor y cobro: el margen es de 92 %. Si LicitaPYME te ayuda a ganar un solo contrato,
+> "Tres planes, como me sugirió una persona que le vende a municipalidades: **S/ 15** para quien empieza, **S/ 49** para
+> quien ya postula y **S/ 199** para contadores con varias empresas. Un usuario Pro nos cuesta unos **S/ 4** en IA,
+> servidor y cobro: el margen es de 92 %. Si LicitaPYME te ayuda a ganar un solo contrato,
 > la suscripción anual se paga cientos de veces. Lo que sigue: datos diarios del SEACE y alertas por WhatsApp."
 
 ---

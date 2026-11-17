@@ -19,3 +19,7 @@ venv/
 # Sistema
 .DS_Store
 Thumbs.db
+
+# Guiones personales de presentación (se guardan fuera del repo)
+docs/pitch.md
+docs/guion_video.md

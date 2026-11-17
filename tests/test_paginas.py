@@ -171,8 +171,8 @@ def test_editar_perfil_conserva_guardadas_e_historial_y_desactualiza_evaluacione
     db.guardar_evaluacion(eid, ocid, 1, {"puntaje": 80, "semaforo": "verde", "confianza": 70})
 
     at = abrir("perfil.py")
-    at.number_input(key="ed_monto").set_value(2_000_000)
-    next(b for b in at.button if b.label == "Guardar cambios" and b.form_id == "form_cobertura").click().run()
+    at.number_input(key="ed0_monto").set_value(2_000_000)
+    next(b for b in at.button if b.label == "Guardar y completar con IA").click().run()
     assert not at.exception
 
     emp = db.empresa(eid, "local")

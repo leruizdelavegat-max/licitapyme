@@ -332,7 +332,12 @@ def enriquecer(df: pd.DataFrame, p: dict) -> pd.DataFrame:
     ev = evaluaciones(solo_vigentes=True)
     df["semaforo"] = df["ocid"].map(lambda o: ev[o]["semaforo"] if o in ev else "gris")
     df["compatibilidad"] = df["ocid"].map(lambda o: ev[o]["puntaje"] if o in ev else None)
+    # Orden de prioridad: compatibles primero, luego sin evaluar y al final las descartadas por la IA.
+    df["prioridad"] = df["semaforo"].map(PRIORIDAD)
     return df
+
+
+PRIORIDAD = {"verde": 0, "amarillo": 1, "gris": 2, "rojo": 3}
 
 
 # ------------------------------------------------------------------ evaluación con IA

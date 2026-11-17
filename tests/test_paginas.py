@@ -224,6 +224,22 @@ def test_buscar_y_mapa_usan_la_misma_busqueda():
     assert conteos["mapa.py"] <= conteos["buscar.py"], f"el mapa no usa la misma búsqueda: {conteos}"
 
 
+def test_buscar_oculta_las_descartadas_por_la_ia():
+    db, comun = db_y_comun()
+    eid = crear_empresa(comun.PERFIL_DEMO)
+
+    def encontradas() -> int:
+        at = abrir("buscar.py")
+        cuerpo = next(h.body for h in at.get("html") if "lp-kpi" in str(getattr(h, "body", "")))
+        return int(cuerpo.split('lp-val">')[1].split("<")[0].replace(",", ""))
+
+    antes = encontradas()
+    df = comun.enriquecer(comun.cargar_convocatorias(), comun.PERFIL_DEMO)
+    ocid = df[(df["estado"] == "CONVOCADO") & (df["coincidencia"] > 0) & df["categoria"].isin(["Servicios"])]["ocid"].iloc[0]
+    db.guardar_evaluacion(eid, ocid, 1, {"puntaje": 5, "semaforo": "rojo", "confianza": 80, "criterios": {}})
+    assert encontradas() == antes - 1
+
+
 def test_busqueda_no_confunde_arroz_con_carrozable():
     _, comun = db_y_comun()
     df = comun.cargar_convocatorias()

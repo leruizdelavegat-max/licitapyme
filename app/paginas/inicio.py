@@ -11,8 +11,11 @@ p = comun.perfil()
 df = comun.enriquecer(comun.cargar_convocatorias(), p)
 abiertas = df[df["estado"] == "CONVOCADO"]
 del_tipo = abiertas[abiertas["categoria"].isin(p["tipos"])] if p["tipos"] else abiertas
-coinciden = del_tipo[del_tipo["coincidencia"] > 0].sort_values(
-    ["en_cobertura", "coincidencia", "fecha_publicacion"], ascending=[False, False, False])
+candidatas = del_tipo[del_tipo["coincidencia"] > 0]
+# Las que la IA descartó (rojas) no se muestran en el Inicio: no estorban.
+descartadas = candidatas[candidatas["semaforo"] == "rojo"]
+coinciden = candidatas[candidatas["semaforo"] != "rojo"].sort_values(
+    ["prioridad", "en_cobertura", "coincidencia", "fecha_publicacion"], ascending=[True, False, False, False])
 ev = comun.evaluaciones(solo_vigentes=True)
 evaluadas = coinciden[coinciden["ocid"].isin(ev)]
 altas = evaluadas[evaluadas["semaforo"] == "verde"]
@@ -31,9 +34,10 @@ c2.page_link("paginas/perfil.py", label="Editar perfil", icon=":material/edit:")
 # ------------------------------------------------------------------ B. indicadores
 k = st.columns(5)
 ui.kpi(k[0], "Convocatorias abiertas", f"{len(del_tipo):,}", "del tipo que ofreces")
-ui.kpi(k[1], "Coinciden con tu perfil", f"{len(coinciden):,}", "por palabras y categorías", acento=True)
+ui.kpi(k[1], "Coinciden con tu perfil", f"{len(coinciden):,}",
+       f"{len(descartadas)} descartadas por la IA" if len(descartadas) else "por palabras y categorías", acento=True)
 ui.kpi(k[2], "Dentro de tu cobertura", f"{int(coinciden['en_cobertura'].sum()):,}", "de las que coinciden")
-ui.kpi(k[3], "Evaluadas por IA", f"{len(evaluadas):,}", "con tu perfil actual")
+ui.kpi(k[3], "Evaluadas por IA", f"{len(evaluadas) + len(descartadas):,}", "con tu perfil actual")
 ui.kpi(k[4], "Alta compatibilidad", f"{len(altas):,}", "70 % o más, con confianza")
 
 if coinciden.empty:
@@ -46,11 +50,17 @@ if coinciden.empty:
 ui.seccion("Recomendaciones de la IA", "Las más compatibles con tu empresa")
 if evaluadas.empty:
     with st.container(border=True):
-        st.markdown("Todavía no hay evaluaciones con tu perfil actual. La IA puede revisar tus mejores coincidencias "
-                    "en unos segundos y explicarte cuáles te convienen.")
-        if comun.hay_ia() and st.button("Evaluar mis 5 mejores coincidencias", type="primary", icon=":material/auto_awesome:"):
+        if len(descartadas):
+            st.markdown(f"La IA revisó {len(descartadas)} coincidencia(s) y las descartó porque no corresponden a tu "
+                        "empresa. Puedes pedirle que revise las siguientes.")
+        else:
+            st.markdown("Todavía no hay evaluaciones con tu perfil actual. La IA puede revisar tus mejores coincidencias "
+                        "en unos segundos y explicarte cuáles te convienen.")
+        sin_evaluar = coinciden[coinciden["semaforo"] == "gris"]
+        if comun.hay_ia() and not sin_evaluar.empty and st.button(
+                "Evaluar mis 5 mejores coincidencias", type="primary", icon=":material/auto_awesome:"):
             with st.spinner("La IA está leyendo las convocatorias…"):
-                comun.evaluar_varias(coinciden.head(5).to_dict("records"))
+                comun.evaluar_varias(sin_evaluar.head(5).to_dict("records"))
             st.rerun()
 else:
     top = evaluadas.sort_values("compatibilidad", ascending=False).head(3)
@@ -111,7 +121,6 @@ with der:
             st.html(f'<div class="lp-titulo" style="font-size:14px">{ui.e(c["entidad"])}</div>'
                     + ui.meta([("Cierre de consultas", comun.fecha(c["consultas_fin"])), ("Faltan", f"{int(c['dias_consultas'])} días")]))
 
-ui.seccion("Coincidencias más recientes", "Ordenadas por cobertura y relevancia")
-for c in coinciden[~coinciden["ocid"].isin(ev)].head(4).to_dict("records"):
-    comun.tarjeta(c, clave="inicio")
-st.page_link("paginas/buscar.py", label=f"Ver las {len(coinciden):,} coincidencias en Buscar convocatorias", icon=":material/search:")
+st.divider()
+st.page_link("paginas/buscar.py", label=f"Revisar las {len(coinciden):,} coincidencias en Buscar convocatorias",
+             icon=":material/search:")

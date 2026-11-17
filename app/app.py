@@ -43,8 +43,9 @@ def pantalla_acceso():
             auth = st.secrets.get("auth", {})
             st.login("google") if "google" in auth else st.login()
     else:
-        c1, c2 = c2, c1  # sin inicio de sesión, el botón de ejemplo va primero
-    if c2.button("Explorar con una empresa de ejemplo", icon=":material/visibility:", width="stretch",
+        c2 = st  # sin inicio de sesión, el botón de ejemplo va solo y con su ancho natural
+    if c2.button("Explorar con una empresa de ejemplo", icon=":material/visibility:",
+                 width="stretch" if sesion.auth_configurado() else "content",
                  type="secondary" if sesion.auth_configurado() else "primary"):
         sesion.iniciar_demo(comun.PERFIL_DEMO)
         st.rerun()
@@ -65,14 +66,17 @@ emp = sesion.empresa_actual()
 confirmada = emp is not None and emp["estado"] == "confirmado"
 
 if confirmada:
-    paginas = [
-        st.Page(P / "inicio.py", title="Inicio", icon=":material/dashboard:", default=True),
-        st.Page(P / "mapa.py", title="Mapa de oportunidades", icon=":material/map:"),
-        st.Page(P / "buscar.py", title="Buscar convocatorias", icon=":material/search:"),
-        st.Page(P / "mis_oportunidades.py", title="Mis oportunidades", icon=":material/bookmarks:"),
-        st.Page(P / "mercado.py", title="Análisis del mercado", icon=":material/monitoring:"),
-        st.Page(P / "perfil.py", title="Perfil de mi empresa", icon=":material/domain:"),
-    ]
+    # Orden del menú: mi empresa → explorar el mercado y las convocatorias → hacer seguimiento.
+    paginas = {
+        "": [st.Page(P / "inicio.py", title="Inicio", icon=":material/dashboard:", default=True)],
+        "Mi empresa": [st.Page(P / "perfil.py", title="Perfil de mi empresa", icon=":material/domain:")],
+        "Explorar": [
+            st.Page(P / "mercado.py", title="Análisis del mercado", icon=":material/monitoring:"),
+            st.Page(P / "buscar.py", title="Buscar convocatorias", icon=":material/search:"),
+            st.Page(P / "mapa.py", title="Mapa de oportunidades", icon=":material/map:"),
+        ],
+        "Seguimiento": [st.Page(P / "mis_oportunidades.py", title="Mis oportunidades", icon=":material/bookmarks:")],
+    }
 else:
     paginas = [st.Page(P / "configurar.py", title="Configurar mi empresa", icon=":material/domain_add:", default=True)]
 nav = st.navigation(paginas, position="sidebar")

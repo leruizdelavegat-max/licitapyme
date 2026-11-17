@@ -30,6 +30,9 @@ with st.container(border=True):
     monto_max = c4.number_input("Monto máximo (S/)", 0, 1_000_000_000, 0, step=100_000,
                                 help="0 = sin límite. Incluye las que no publican monto.")
     orden = c5.selectbox("Ordenar por", ["Relevancia", "Compatibilidad IA", "Más recientes", "Mayor monto", "Cierre de consultas"])
+    ver_descartadas = st.toggle("Mostrar las descartadas por la IA", value=False,
+                                help="La búsqueda por palabras trae candidatas; la IA descarta las que no corresponden a "
+                                     "tu empresa (por ejemplo, 'arroz' en una fórmula láctea). Por defecto se ocultan.")
 
 f = comun.enriquecer(df, {**p, "palabras_clave": palabras})
 if tipos:
@@ -44,10 +47,14 @@ if monto_max:
     f = f[f["monto_soles"].isna() | (f["monto_soles"] <= monto_max)]
 if palabras or p.get("categorias"):
     f = f[f["coincidencia"] > 0]
+descartadas = int((f["semaforo"] == "rojo").sum())
+if not ver_descartadas and "rojo" not in compat:
+    f = f[f["semaforo"] != "rojo"]
 
 orden_cols = {
-    "Relevancia": (["en_cobertura", "coincidencia", "fecha_publicacion"], [False, False, False]),
-    "Compatibilidad IA": (["compatibilidad", "coincidencia"], [False, False]),
+    "Relevancia": (["prioridad", "compatibilidad", "en_cobertura", "coincidencia", "fecha_publicacion"],
+                   [True, False, False, False, False]),
+    "Compatibilidad IA": (["prioridad", "compatibilidad", "coincidencia"], [True, False, False]),
     "Más recientes": (["fecha_publicacion"], [False]),
     "Mayor monto": (["monto_soles"], [False]),
     "Cierre de consultas": (["consultas_fin"], [True]),
@@ -59,7 +66,8 @@ f = f.sort_values(cols, ascending=asc, na_position="last")
 k = st.columns(4)
 ui.kpi(k[0], "Convocatorias encontradas", f"{len(f):,}", acento=True)
 ui.kpi(k[1], "En tu cobertura", f"{int(f['en_cobertura'].sum()):,}")
-ui.kpi(k[2], "Evaluadas por IA", f"{int((f['semaforo'] != 'gris').sum()):,}")
+ui.kpi(k[2], "Evaluadas por IA", f"{int((f['semaforo'] != 'gris').sum()):,}",
+       f"{descartadas} descartadas ocultas" if descartadas and not ver_descartadas and "rojo" not in compat else None)
 ui.kpi(k[3], "Valor referencial publicado", comun.soles(f["monto_soles"].sum()))
 
 if f.empty:
@@ -72,13 +80,17 @@ if comun.hay_ia():
         c1, c2 = st.columns([3, 1], vertical_alignment="center")
         c1.markdown("**La IA revisa tus oportunidades.** La búsqueda encuentra palabras; la IA entiende si de verdad "
                     "te conviene. Evalúa 7 criterios y calcula el porcentaje con una metodología fija.")
-        tope = min(15, len(f))
-        n = c1.slider("¿Cuántas de las primeras evaluar?", 1, tope, min(5, tope)) if tope > 1 else 1
-        if c2.button(f"Evaluar {n} con IA", type="primary", icon=":material/auto_awesome:", width="stretch"):
-            with st.spinner(f"La IA está leyendo {n} convocatorias…"):
-                ok = comun.evaluar_varias(f.head(n).to_dict("records"))
-            st.toast(f"{ok} convocatorias evaluadas")
-            st.rerun()
+        sin_evaluar = f[f["semaforo"] == "gris"]
+        tope = min(15, len(sin_evaluar))
+        if tope == 0:
+            c1.caption("Todas las convocatorias de esta lista ya están evaluadas.")
+        else:
+            n = c1.slider("¿Cuántas sin evaluar revisar?", 1, tope, min(5, tope)) if tope > 1 else 1
+            if c2.button(f"Evaluar {n} con IA", type="primary", icon=":material/auto_awesome:", width="stretch"):
+                with st.spinner(f"La IA está leyendo {n} convocatorias…"):
+                    ok = comun.evaluar_varias(sin_evaluar.head(n).to_dict("records"))
+                st.toast(f"{ok} convocatorias evaluadas")
+                st.rerun()
 else:
     st.warning("Falta la clave DEEPSEEK_API_KEY: la evaluación con IA está desactivada.")
 

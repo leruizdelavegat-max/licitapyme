@@ -66,6 +66,19 @@ def test_usuario_nuevo_ve_configuracion_inicial():
     assert not any(b.label == "Registrar otra empresa" for b in at.button)
 
 
+def test_nube_sin_login_solo_permite_modo_ejemplo(monkeypatch):
+    """Con base compartida (Postgres) y sin [auth], nadie entra como usuario común."""
+    import db
+    monkeypatch.setattr(db, "es_nube", lambda: True)
+    at = abrir()
+    assert any(b.label == "Explorar con una empresa de ejemplo" for b in at.button)
+    assert not any(b.label == "Ingresar con Google" for b in at.button)
+    next(b for b in at.button if b.label == "Explorar con una empresa de ejemplo").click().run()
+    assert not at.exception
+    assert "Panel de oportunidades" in textos(at)
+    assert db.empresas_de("local") == []  # el visitante no quedó en el usuario compartido
+
+
 def test_perfil_incompleto_continua_en_su_paso():
     db, comun = db_y_comun()
     eid = crear_empresa({"nombre": "Borrador SAC"}, confirmada=False)

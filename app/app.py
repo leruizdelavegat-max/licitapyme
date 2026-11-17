@@ -38,14 +38,20 @@ def pantalla_acceso():
         sobre="LicitaPYME",
     )
     c1, c2, _ = st.columns([1.3, 1.6, 2])
-    if c1.button("Ingresar con Google", type="primary", icon=":material/login:", width="stretch"):
-        auth = st.secrets.get("auth", {})
-        st.login("google") if "google" in auth else st.login()
-    if c2.button("Explorar con una empresa de ejemplo", icon=":material/visibility:", width="stretch"):
+    if sesion.auth_configurado():
+        if c1.button("Ingresar con Google", type="primary", icon=":material/login:", width="stretch"):
+            auth = st.secrets.get("auth", {})
+            st.login("google") if "google" in auth else st.login()
+    if c2.button("Explorar con una empresa de ejemplo", icon=":material/visibility:", width="stretch",
+                 type="secondary" if sesion.auth_configurado() else "primary"):
         sesion.iniciar_demo(comun.PERFIL_DEMO)
         st.rerun()
-    st.caption("Al ingresar, tus empresas, oportunidades guardadas e historial se conservan para tu próxima visita. "
-               "El modo de ejemplo no requiere registro.")
+    if sesion.auth_configurado():
+        st.caption("Al ingresar, tus empresas, oportunidades guardadas e historial se conservan para tu próxima visita. "
+                   "El modo de ejemplo no requiere registro.")
+    else:
+        st.caption("El inicio de sesión se está habilitando. Mientras tanto puedes explorar la plataforma con una "
+                   "empresa de ejemplo; tus cambios se guardan solo durante esta visita.")
 
 
 uid = sesion.usuario_id()

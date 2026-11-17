@@ -29,6 +29,10 @@ def usuario_id() -> str | None:
         return st.session_state["demo_id"]
     if auth_configurado():
         return st.user.email if st.user.is_logged_in else None
+    if db.es_nube():
+        # Base compartida en la nube sin inicio de sesión: no se usa un usuario común
+        # (todos verían las empresas de todos). Solo se permite el modo de ejemplo.
+        return None
     return "local"
 
 

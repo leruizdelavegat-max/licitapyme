@@ -36,10 +36,12 @@ def bloque_oferta(p: dict, clave: str) -> dict:
                              placeholder="Ej.: arroz, azúcar, aceite, conservas, útiles de limpieza…")
     servicios = c2.text_area("Servicios que ofreces", p.get("servicios", ""), height=110, key=f"{clave}_servicios",
                              placeholder="Ej.: distribución a domicilio, catering, limpieza de oficinas…")
+    st.caption("Opcional: si dejas estos campos vacíos, la IA deduce lo que vendes a partir de tu actividad "
+               "(por ejemplo, de \"tienda de abarrotes\" deduce arroz, azúcar, aceite, víveres…).")
     texto = st.text_input(
-        "Palabras clave para buscar convocatorias *", ", ".join(p["palabras_clave"]), key=f"{clave}_palabras",
+        "Palabras clave para buscar convocatorias", ", ".join(p["palabras_clave"]), key=f"{clave}_palabras",
         placeholder="Ej.: abarrotes, víveres, arroz, útiles de limpieza",
-        help="Sepáralas con comas. Cómo buscarías tu producto en el SEACE. Después la IA te sugerirá más.",
+        help="Sepáralas con comas. Opcional: la IA agrega las que correspondan a tu actividad.",
     )
     palabras = list(dict.fromkeys(w.strip() for w in texto.split(",") if w.strip()))
     return {"productos": productos.strip(), "servicios": servicios.strip(), "palabras_clave": palabras}
@@ -97,10 +99,7 @@ def errores(paso: int, d: dict) -> list[str]:
         if len(d["actividad"]) < 10:
             e.append("Describe en una frase a qué se dedica tu empresa.")
     elif paso == 2:
-        if not (d["productos"] or d["servicios"]):
-            e.append("Indica al menos un producto o servicio.")
-        if not d["palabras_clave"]:
-            e.append("Agrega al menos una palabra clave (sepáralas con comas).")
+        pass  # opcional: la IA deduce productos y palabras clave de la actividad
     elif paso == 3:
         if not d["tipos"]:
             e.append("Elige si vendes bienes, servicios u obras.")
@@ -121,10 +120,42 @@ def cambio_relevante(antes: dict, despues: dict) -> bool:
 
 
 # ------------------------------------------------------------------ interpretación con IA
+@st.cache_data(show_spinner=False)
 def contar_coincidencias(palabra: str) -> int:
     df = comun.cargar_convocatorias()
     abiertas = df[df["estado"] == "CONVOCADO"]
     return int((comun.puntuar_palabras(abiertas, [palabra]) > 0).sum())
+
+
+def ejecutar_interpretacion(p: dict) -> dict | None:
+    from ai.perfil import interpretar
+    try:
+        return interpretar(comun.texto_perfil(p), p["palabras_clave"])
+    except Exception as ex:
+        print(f"[IA] perfil: {type(ex).__name__}: {ex}")
+        return None
+
+
+def seleccion_automatica(p: dict, analisis: dict | None) -> dict:
+    """Palabras y categorías que la app propone sola a partir de la interpretación de la IA.
+
+    - Quita las palabras declaradas que la IA marcó como ajenas a la actividad (p. ej. tras un cambio de rubro).
+    - Agrega las sugeridas que encuentran al menos una convocatoria abierta.
+    - Elige las categorías CUBSO reales que corresponden.
+    """
+    if not analisis:
+        return {"palabras_clave": list(p["palabras_clave"]), "categorias": list(p.get("categorias") or []),
+                "agregadas": [], "quitadas": []}
+    ajenas = {comun.normalizar(w) for w in analisis.get("palabras_no_relacionadas") or []}
+    quitadas = [w for w in p["palabras_clave"] if comun.normalizar(w) in ajenas]
+    conservadas = [w for w in p["palabras_clave"] if w not in quitadas]
+    sugeridas = [w for w in analisis.get("palabras_sugeridas") or [] if contar_coincidencias(w) > 0]
+    palabras = list(dict.fromkeys(conservadas + sugeridas))
+    agregadas = [w for w in palabras if w not in p["palabras_clave"]]
+    cats = categorias_reales(analisis.get("categorias_sugeridas") or [], palabras)
+    previas = [c for c in p.get("categorias") or [] if c in set(cats["cubso"])]
+    categorias = previas or cats["cubso"].tolist()[:5]
+    return {"palabras_clave": palabras, "categorias": categorias, "agregadas": agregadas, "quitadas": quitadas}
 
 
 def categorias_reales(sugeridas: list[str], palabras: list[str]) -> pd.DataFrame:
@@ -161,12 +192,7 @@ def vista_analisis(emp: dict, al_confirmar_texto: str, automatico: bool = True) 
         pedir = st.button("Pedir sugerencias a la IA", icon=":material/auto_awesome:", key=f"pedir_ia_{emp['id']}")
     if analisis is None and comun.hay_ia() and pedir:
         with st.spinner("La IA está interpretando tu perfil…"):
-            from ai.perfil import interpretar
-            try:
-                analisis = interpretar(comun.texto_perfil(p), p["palabras_clave"])
-            except Exception as ex:
-                print(f"[IA] perfil: {type(ex).__name__}: {ex}")
-                analisis = None
+            analisis = ejecutar_interpretacion(p)
         if analisis:
             import db
             db.actualizar_empresa(emp["id"], emp["usuario_id"], analisis=analisis)
@@ -194,24 +220,31 @@ def vista_analisis(emp: dict, al_confirmar_texto: str, automatico: bool = True) 
                          ("RNP", p["rnp"])]))
         st.caption("Estos datos no los interpreta la IA: se usan tal como los escribiste.")
 
-    # Palabras clave: las que declaró + sugeridas, cada una probada contra convocatorias reales.
+    # Palabras clave: la app ya deja marcadas las que corresponden a la actividad (selección automática);
+    # la persona solo ajusta si quiere.
+    sel = seleccion_automatica(p, analisis)
     ui.seccion("Palabras clave para buscar", "Número = convocatorias abiertas que encuentra cada una")
-    candidatas = list(dict.fromkeys(p["palabras_clave"] + (analisis["palabras_sugeridas"] if analisis else [])))
+    candidatas = list(dict.fromkeys(sel["palabras_clave"] + p["palabras_clave"]
+                                    + (analisis.get("palabras_sugeridas") or [] if analisis else [])))
     conteos = {w: contar_coincidencias(w) for w in candidatas}
     utiles = [w for w in candidatas if conteos[w] > 0 or w in p["palabras_clave"]]
     descartadas = [w for w in candidatas if w not in utiles]
+    if sel["agregadas"] or sel["quitadas"]:
+        st.caption("Ya dejamos marcadas las palabras según tu actividad"
+                   + (f". Agregadas: {', '.join(sel['agregadas'])}" if sel["agregadas"] else "")
+                   + (f". Quitadas porque no corresponden a tu actividad: {', '.join(sel['quitadas'])}" if sel["quitadas"] else "")
+                   + ". Puedes ajustarlas.")
     elegidas = st.multiselect(
-        "Elige las palabras que describen lo que vendes", options=utiles,
-        default=[w for w in utiles if w in p["palabras_clave"] or conteos[w] > 0],
-        format_func=lambda w: f"{w} ({conteos[w]})", key=f"analisis_palabras_{emp['id']}",
+        "Palabras con las que buscaremos lo que vendes", options=utiles,
+        default=[w for w in sel["palabras_clave"] if w in utiles],
+        format_func=lambda w: f"{w} ({conteos[w]})", key=f"analisis_palabras_{emp['id']}_{emp['version']}",
         accept_new_options=True,
     )
     if descartadas:
         st.caption("Sugerencias descartadas porque no encuentran ninguna convocatoria abierta: " + ", ".join(descartadas))
 
     ui.seccion("Categorías del catálogo del Estado (CUBSO)", "Solo categorías que existen en los datos reales")
-    cats = categorias_reales(analisis["categorias_sugeridas"] if analisis else [], elegidas)
-    previas = [c for c in p.get("categorias", []) if c in set(cats["cubso"])]
+    cats = categorias_reales(analisis.get("categorias_sugeridas") or [] if analisis else [], elegidas)
     if cats.empty:
         st.caption("No encontramos categorías del catálogo para este perfil. La búsqueda usará tus palabras clave.")
         categorias = []
@@ -219,9 +252,9 @@ def vista_analisis(emp: dict, al_confirmar_texto: str, automatico: bool = True) 
         info = cats.set_index("cubso")
         categorias = st.multiselect(
             "Categorías relacionadas con tu empresa", options=cats["cubso"].tolist(),
-            default=previas or cats["cubso"].tolist()[:5],
+            default=[c for c in sel["categorias"] if c in set(cats["cubso"])] or cats["cubso"].tolist()[:5],
             format_func=lambda c: f"{c.title()} ({info.loc[c, 'abiertas']} abiertas)",
-            key=f"analisis_cats_{emp['id']}",
+            key=f"analisis_cats_{emp['id']}_{emp['version']}",
         )
     if analisis and analisis.get("observacion"):
         st.info(analisis["observacion"], icon=":material/lightbulb:")

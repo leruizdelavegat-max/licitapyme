@@ -44,6 +44,20 @@ def test_word_resalta_los_datos_por_completar():
     assert len(doc.tables) == 2
 
 
+def test_seleccion_automatica_quita_palabras_de_otro_rubro():
+    _, comun = db_y_comun()
+    import formulario_perfil as fp
+    p = {**comun.PERFIL_VACIO, "actividad": "Tienda de abarrotes",
+         "palabras_clave": ["servicio de limpieza", "abarrotes"], "categorias": []}
+    analisis = {"palabras_sugeridas": ["arroz", "zzzz-no-existe"], "palabras_no_relacionadas": ["servicio de limpieza"],
+                "categorias_sugeridas": ["ARROZ PILADO"]}
+    sel = fp.seleccion_automatica(p, analisis)
+    assert "servicio de limpieza" not in sel["palabras_clave"] and sel["quitadas"] == ["servicio de limpieza"]
+    assert "arroz" in sel["palabras_clave"]                  # sugerida con convocatorias reales
+    assert "zzzz-no-existe" not in sel["palabras_clave"]     # sugerida sin convocatorias: descartada
+    assert "abarrotes" in sel["palabras_clave"]              # declarada y relacionada: se conserva
+
+
 def test_carta_reemplaza_ruc_no_declarado():
     from ai.documentos import verificar_numeros
     assert verificar_numeros("Empresa con RUC 20123456789", "") == ["20123456789"]

@@ -18,14 +18,22 @@ ui.encabezado("Perfil de mi empresa", "Edita la información de tu empresa. Tus 
               "historial se conservan; las evaluaciones de IA anteriores se marcan como desactualizadas.",
               sobre=p["nombre"])
 
-if st.session_state.pop("_perfil_guardado", None):
-    st.success("Perfil actualizado. Las recomendaciones y búsquedas ya usan la nueva información.", icon=":material/check_circle:")
+guardado = st.session_state.pop("_perfil_guardado", None)
+if guardado:
+    msg = "Perfil actualizado. Las recomendaciones y búsquedas ya usan la nueva información."
+    if isinstance(guardado, dict):
+        if guardado["agregadas"]:
+            msg += f" La IA agregó estas palabras clave: {', '.join(guardado['agregadas'])}."
+        if guardado["quitadas"]:
+            msg += f" Quitó las que ya no corresponden a tu actividad: {', '.join(guardado['quitadas'])}."
+        msg += " Puedes ajustarlas en la pestaña Interpretación de la IA."
+    st.success(msg, icon=":material/check_circle:")
 
 tab_datos, tab_oferta, tab_cob, tab_ia, tab_datos_exp = st.tabs(
     ["Datos", "Productos y servicios", "Cobertura y capacidad", "Interpretación de la IA", "Mis datos"])
 
 
-def guardar(nuevos: dict, paso: int):
+def guardar(nuevos: dict, paso: int, reinterpretar: bool = True):
     errs = fp.errores(paso, {**p, **nuevos})
     if errs:
         for x in errs:
@@ -33,12 +41,21 @@ def guardar(nuevos: dict, paso: int):
         return
     despues = {**p, **nuevos}
     relevante = fp.cambio_relevante(p, despues)
-    db.actualizar_empresa(emp["id"], uid, datos=despues, subir_version=relevante)
-    if relevante:
+    analisis, resumen = None, True
+    # Si cambió algo importante, la IA vuelve a leer el perfil y actualiza sola palabras y categorías.
+    if relevante and reinterpretar and comun.hay_ia():
+        with st.spinner("La IA está actualizando tus palabras clave según tu actividad…"):
+            analisis = fp.ejecutar_interpretacion(despues)
+        if analisis:
+            sel = fp.seleccion_automatica(despues, analisis)
+            despues["palabras_clave"], despues["categorias"] = sel["palabras_clave"], sel["categorias"]
+            resumen = sel
+    db.actualizar_empresa(emp["id"], uid, datos=despues, subir_version=relevante, analisis=analisis)
+    if relevante and not analisis and reinterpretar:
         db.reiniciar_analisis(emp["id"], uid)
     db.registrar_evento(emp["id"], "Perfil actualizado")
     sesion.limpiar_cache()
-    st.session_state["_perfil_guardado"] = True
+    st.session_state["_perfil_guardado"] = resumen
     st.rerun()
 
 
@@ -62,7 +79,7 @@ with tab_ia:
                "Cada sugerencia se prueba contra las convocatorias reales.")
     resultado = fp.vista_analisis(emp, "Guardar palabras y categorías", automatico=False)
     if resultado:
-        guardar(resultado, 2)
+        guardar(resultado, 2, reinterpretar=False)  # son elecciones explícitas: no se vuelven a cambiar
 with tab_datos_exp:
     st.caption("Tu información está guardada en la base de datos de LicitaPYME"
                + (" (en la nube)." if db.es_nube() else " (en este equipo).")

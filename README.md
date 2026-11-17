@@ -114,18 +114,16 @@ flowchart LR
 | Plan | Precio | Para quién | Qué incluye |
 |---|---|---|---|
 | Básico | **S/ 15 / mes** | MYPE que recién empieza a venderle al Estado | Búsqueda por rubro, mapa y 10 evaluaciones con IA al mes |
-| Pro | **S/ 49 / mes** | MYPE que ya postula | Evaluaciones ilimitadas, lectura de bases, comparador y análisis del mercado |
-| Consultor | **S/ 199 / mes** | Estudios contables y asesores | Todo lo de Pro para varias empresas cliente |
+| Premium | **S/ 49 / mes** | MYPE que ya postula | Evaluaciones ilimitadas, lectura de bases, comparador, análisis del mercado y varias empresas por cuenta |
 
 **Por qué estos precios:** en la [conversación 1](docs/research/01-proveedora-municipal.md), una persona que vende a
 municipalidades propuso *"unos 15 soles al mes, para probar"* para quien recién empieza y *"unos 50 soles. Incluso 60"*
-para quien ya consigue contratos, en **tres planes** (básico, intermedio y premium). La investigación documental
-apunta al mismo rango.
+para quien ya consigue contratos. Elegimos dos planes para que la decisión de compra sea simple.
 
-**Costo por usuario (plan Pro, estimado).** Tokens medidos en pruebas; precio de DeepSeek `deepseek-flash` en horario pico
+**Costo por usuario (plan Premium, estimado).** Tokens medidos en pruebas; precio de DeepSeek `deepseek-flash` en horario pico
 (el más caro): USD 0.30 por millón de tokens de entrada y USD 1.20 por millón de salida. Tipo de cambio ~S/ 3.75.
 
-| Uso mensual de un usuario Pro | Tokens por uso (entrada / salida) | Costo |
+| Uso mensual de un usuario Premium | Tokens por uso (entrada / salida) | Costo |
 |---|---|---|
 | 100 evaluaciones de compatibilidad | ~600 / ~1,000 | ~S/ 0.52 |
 | 10 lecturas de bases en PDF | ~40,000 / ~3,000 | ~S/ 0.59 |
@@ -135,7 +133,7 @@ apunta al mismo rango.
 | Comisión de cobro con tarjeta (~4 %) | | ~S/ 1.96 |
 | **Costo total por usuario** | | **~S/ 4.10** |
 
-**Margen de contribución del plan Pro: ~S/ 45 de S/ 49 (~92 %).** En el plan Básico, 10 evaluaciones cuestan
+**Margen de contribución del plan Premium: ~S/ 45 de S/ 49 (~92 %).** En el plan Básico, 10 evaluaciones cuestan
 ~S/ 0.05 en IA; con servidor (~S/ 0.95) y comisión (~S/ 0.60), el costo es ~S/ 1.60 y el margen ~S/ 13.40 (~89 %). Precios de la API según la página oficial de DeepSeek (verificar
 antes de escalar: cambian con cada versión del modelo).
 

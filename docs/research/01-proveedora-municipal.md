@@ -5,6 +5,7 @@
   proveedores municipales de otros rubros (materiales de obra, alimentos, útiles, equipos, ropa de trabajo,
   servicios). Se identifica solo por su rol; no se publican su nombre ni los datos de su empresa.
 - **¿Vende al Estado?** Sí, de forma recurrente.
+- **Consentimiento:** aceptó que se cite la conversación sin su nombre ni datos de su empresa.
 
 ## Lo que dijo
 
@@ -51,5 +52,5 @@ impresoras; y servicios como consultorías.
    opción de registrar varias empresas en una cuenta.
 4. **Límite honesto:** las compras pequeñas por cotización directa no siempre se publican en el SEACE, así
    que LicitaPYME no las ve. Es un espacio para el futuro (p. ej. directorio de proveedores por rubro).
-5. **Modelo de negocio:** se ajustó a tres planes con un plan básico de S/ 15 (ver README, sección 7).
+5. **Modelo de negocio:** se definieron dos planes, Básico S/ 15 y Premium S/ 49 (ver README, sección 7).
 6. **Pendiente:** alertas (las pidió explícitamente) y revisión de documentos de la empresa.

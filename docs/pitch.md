@@ -26,9 +26,9 @@ evaluadas y 2 guardadas), segunda pestaña con el **Mapa**, pantalla compartida 
 | 2:20 | (Opcional, si sobra tiempo) **Mis oportunidades → Comparador** | "Guardo dos y la IA me dice cuál priorizar, sin confundir el mayor monto con la mayor rentabilidad." |
 
 ## 2:30 – 3:00 · El negocio
-> "Tres planes, como me sugirió una persona que le vende a municipalidades: **S/ 15** para quien empieza, **S/ 49** para
-> quien ya postula y **S/ 199** para contadores con varias empresas. Un usuario Pro nos cuesta unos **S/ 4** en IA,
-> servidor y cobro: el margen es de 92 %. Si LicitaPYME te ayuda a ganar un solo contrato,
+> "Dos planes, con precios que me sugirió una persona que le vende a municipalidades: **Básico a S/ 15** para quien
+> empieza y **Premium a S/ 49** para quien ya postula. Un usuario Premium nos cuesta unos **S/ 4** en IA, servidor y
+> cobro: el margen es de 92 %. Si LicitaPYME te ayuda a ganar un solo contrato,
 > la suscripción anual se paga cientos de veces. Lo que sigue: datos diarios del SEACE y alertas por WhatsApp."
 
 ---

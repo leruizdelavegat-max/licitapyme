@@ -43,7 +43,8 @@ ui.kpi(k[1], "En preparación o postuladas",
 ui.kpi(k[2], "Adjudicadas", f"{int((mis['seguimiento'] == 'Adjudicada').sum())}")
 ui.kpi(k[3], "Evaluadas por IA", f"{int((mis['semaforo'] != 'gris').sum())}")
 
-tab_seg, tab_req, tab_comp, tab_hist = st.tabs(["Seguimiento y calendario", "Requisitos de las bases", "Comparador", "Historial"])
+tab_seg, tab_req, tab_comp, tab_hist = st.tabs(["Seguimiento y calendario", "Requisitos de las bases", "Comparador", "Historial"],
+                                               key="tabs_mis_oportunidades", on_change="rerun")
 
 # ------------------------------------------------------------------ seguimiento
 with tab_seg:

@@ -76,6 +76,7 @@ if confirmada:
             st.Page(P / "mapa.py", title="Mapa de oportunidades", icon=":material/map:"),
         ],
         "Seguimiento": [st.Page(P / "mis_oportunidades.py", title="Mis oportunidades", icon=":material/bookmarks:")],
+        "Premium": [st.Page(P / "postulacion.py", title="Preparar postulación", icon=":material/workspace_premium:")],
     }
 else:
     paginas = [st.Page(P / "configurar.py", title="Configurar mi empresa", icon=":material/domain_add:", default=True)]

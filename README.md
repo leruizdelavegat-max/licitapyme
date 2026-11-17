@@ -54,6 +54,7 @@ LicitaPYME responde 5 preguntas:
 | ¿Qué tan compatible soy? | IA que evalúa 7 criterios con una **metodología fija y documentada** |
 | ¿Qué necesito para postular? | La IA lee las bases (PDF) y **verifica cada requisito contra el texto, con su página** |
 | ¿Cuál priorizo? | Comparador con IA + precios históricos, entidades y proveedores adjudicados |
+| ¿Cómo preparo la postulación? (Premium) | Para la convocatoria más compatible: checklist de documentos (desde las bases verificadas), carta de presentación redactada solo con los datos del perfil y borrador de cotización con referencias de precio, en un Word donde lo que falta queda resaltado como **[COMPLETAR]** |
 
 **Insight:** el SEACE es público pero ilegible. El valor no está en los datos, sino en traducirlos a "esta te conviene, por esto, y esto se suele pagar". Y la IA solo es útil si **no inventa**: por eso el porcentaje lo calcula una fórmula, la falta de información no se castiga y cada requisito se verifica contra el PDF.
 
@@ -120,7 +121,7 @@ flowchart LR
 | Plan | Precio | Para quién | Qué incluye |
 |---|---|---|---|
 | Básico | **S/ 15 / mes** | MYPE que recién empieza a venderle al Estado | Búsqueda por rubro, mapa y 10 evaluaciones con IA al mes |
-| Premium | **S/ 49 / mes** | MYPE que ya postula | Evaluaciones ilimitadas, lectura de bases, comparador, análisis del mercado y varias empresas por cuenta |
+| Premium | **S/ 49 / mes** | MYPE que ya postula | Evaluaciones ilimitadas, lectura de bases, comparador, análisis del mercado, varias empresas por cuenta y **Preparar postulación**: checklist de documentos, carta de presentación y borrador de cotización en Word |
 
 **Por qué estos precios:** en la [conversación 1](docs/research/01-proveedora-municipal.md), una persona que vende a
 municipalidades propuso *"unos 15 soles al mes, para probar"* para quien recién empieza y *"unos 50 soles. Incluso 60"*

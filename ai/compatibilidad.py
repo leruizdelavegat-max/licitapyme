@@ -74,7 +74,10 @@ Evalúa SOLO estos 5 criterios (otros los calcula el sistema):
 - actividad: ¿la actividad económica de la empresa corresponde a este tipo de contratación?
 - experiencia: ¿la empresa tiene la experiencia que se pediría? Si la convocatoria no indica la experiencia exigida, usa "sin_informacion".
 - requisitos: requisitos técnicos y documentarios (incluye RNP vigente, que es obligatorio para contratar con el Estado). Si no hay información de requisitos específicos, usa "sin_informacion" salvo lo que se pueda verificar.
-- otras: plazos, lugar o condiciones de entrega o prestación.
+- otras: plazos, lugar o condiciones de entrega o prestación. MUY IMPORTANTE: la sede de la entidad no siempre es
+  el lugar de ejecución. Si la descripción dice dónde se entrega o se presta el servicio (p. ej. "agencias en Cusco,
+  Puno…", "obra en Ayacucho") y ese lugar está FUERA de los departamentos de cobertura de la empresa, marca
+  "no_cumple" y dilo en la evidencia; también menciónalo en "dificultades".
 
 Para cada criterio elige un estado:
 - "cumple": hay evidencia de que la empresa cumple.
@@ -141,8 +144,12 @@ def calcular(criterios: dict) -> dict:
     puntaje = round(100 * sum(CRITERIOS[k]["peso"] * VALOR[v["estado"]] for k, v in con_info.items()) / peso_info) if peso_info else 0
     confianza = peso_info  # los pesos suman 100
     excluyente_falla = any(CRITERIOS[k]["excluyente"] and v["estado"] == "no_cumple" for k, v in criterios.items())
+    # Si el lugar real de ejecución está fuera de la cobertura, no puede ser "alta compatibilidad".
+    fuera_de_zona = criterios.get("otras", {}).get("estado") == "no_cumple"
     if excluyente_falla:
         semaforo = "rojo"
+    elif fuera_de_zona:
+        semaforo = "amarillo"
     elif puntaje >= 70 and confianza >= 60:
         semaforo = "verde"
     else:

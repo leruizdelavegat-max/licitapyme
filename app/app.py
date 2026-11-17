@@ -42,6 +42,8 @@ def pantalla_acceso():
         if c1.button("Ingresar con Google", type="primary", icon=":material/login:", width="stretch"):
             auth = st.secrets.get("auth", {})
             st.login("google") if "google" in auth else st.login()
+    else:
+        c1, c2 = c2, c1  # sin inicio de sesión, el botón de ejemplo va primero
     if c2.button("Explorar con una empresa de ejemplo", icon=":material/visibility:", width="stretch",
                  type="secondary" if sesion.auth_configurado() else "primary"):
         sesion.iniciar_demo(comun.PERFIL_DEMO)

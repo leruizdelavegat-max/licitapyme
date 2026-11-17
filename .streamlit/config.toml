@@ -35,3 +35,8 @@ linkColor = "#9EC0FA"
 
 [client]
 toolbarMode = "minimal"
+
+[server]
+# Streamlit solo recarga los módulos de la carpeta del script (app/). Vigilamos también ai/
+# para que, al publicar cambios, no queden mezcladas versiones nuevas y viejas del código.
+folderWatchList = ["ai"]

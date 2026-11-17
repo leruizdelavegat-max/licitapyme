@@ -27,6 +27,7 @@ class Interpretacion(BaseModel):
     servicios: list[str]
     palabras_sugeridas: list[str]
     palabras_no_relacionadas: list[str] = Field(default_factory=list)
+    productos_servicios_desactualizados: bool = False
     categorias_sugeridas: list[str]
     observacion: str
 
@@ -46,15 +47,23 @@ Responde SOLO con JSON:
                          'útiles de escritorio', 'servicio de limpieza'). Deben corresponder a su ACTIVIDAD."],
  "palabras_no_relacionadas": ["palabras clave que la empresa ya tiene pero que NO corresponden a su actividad
                               declarada (ej.: 'servicio de limpieza' en una tienda de abarrotes). Lista vacía si todas sirven."],
+ "productos_servicios_desactualizados": true si los productos o servicios declarados NO corresponden a la actividad
+                              (por ejemplo, quedaron de un rubro anterior); false si son coherentes,
  "categorias_sugeridas": ["4 a 8 nombres de categorías del catálogo de bienes y servicios del Estado (CUBSO)
                           que correspondan a lo que vende, ej.: 'ARROZ PILADO SUPERIOR', 'ACEITE VEGETAL COMESTIBLE'"],
  "observacion": "una frase: qué información falta en el perfil que ayudaría a encontrar mejores oportunidades"
 }
 REGLAS: no atribuyas a la empresa experiencia, certificaciones, clientes ni capacidades que no declaró.
-No repitas en palabras_sugeridas las palabras que la empresa ya tiene."""
+No repitas en palabras_sugeridas las palabras que la empresa ya tiene.
+Si la ACTIVIDAD y los productos/servicios declarados se contradicen, manda la ACTIVIDAD: sugiere palabras y
+categorías de la actividad, no de los productos/servicios contradictorios."""
 
 
-def interpretar(texto_perfil: str, palabras_actuales: list[str]) -> dict | None:
+def interpretar(texto_perfil: str, palabras_actuales: list[str], actividad_anterior: str | None = None) -> dict | None:
     usuario = f"PERFIL DECLARADO:\n{texto_perfil}\n\nPALABRAS CLAVE QUE YA TIENE: {', '.join(palabras_actuales) or 'ninguna'}"
+    if actividad_anterior:
+        usuario += (f"\n\nATENCIÓN: la empresa acaba de CAMBIAR su actividad. Antes era: '{actividad_anterior}'. "
+                    "Los productos, servicios y palabras clave pueden haber quedado del rubro anterior: si no "
+                    "corresponden a la actividad nueva, ignóralos y márcalos como no relacionados/desactualizados.")
     r = pedir_json(SISTEMA, usuario, Interpretacion)
     return r.model_dump() if r else None

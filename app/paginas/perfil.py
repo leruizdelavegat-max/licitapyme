@@ -28,6 +28,9 @@ if guardado:
             msg += f" Quitó las que ya no corresponden a tu actividad: {', '.join(guardado['quitadas'])}."
         msg += " Puedes ajustarlas en la pestaña Interpretación de la IA."
     st.success(msg, icon=":material/check_circle:")
+    if isinstance(guardado, dict) and guardado.get("desactualizados"):
+        st.warning("Los productos y servicios que tienes registrados no corresponden a tu actividad (parecen de tu "
+                   "rubro anterior). Revísalos en la pestaña **Productos y servicios**.", icon=":material/warning:")
 
 tab_datos, tab_oferta, tab_cob, tab_ia, tab_datos_exp = st.tabs(
     ["Datos", "Productos y servicios", "Cobertura y capacidad", "Interpretación de la IA", "Mis datos"])
@@ -44,12 +47,13 @@ def guardar(nuevos: dict, paso: int, reinterpretar: bool = True):
     analisis, resumen = None, True
     # Si cambió algo importante, la IA vuelve a leer el perfil y actualiza sola palabras y categorías.
     if relevante and reinterpretar and comun.hay_ia():
+        cambio_actividad = p.get("actividad") if p.get("actividad") != despues.get("actividad") else None
         with st.spinner("La IA está actualizando tus palabras clave según tu actividad…"):
-            analisis = fp.ejecutar_interpretacion(despues)
+            analisis = fp.ejecutar_interpretacion(despues, actividad_anterior=cambio_actividad)
         if analisis:
             sel = fp.seleccion_automatica(despues, analisis)
             despues["palabras_clave"], despues["categorias"] = sel["palabras_clave"], sel["categorias"]
-            resumen = sel
+            resumen = {**sel, "desactualizados": bool(analisis.get("productos_servicios_desactualizados"))}
     db.actualizar_empresa(emp["id"], uid, datos=despues, subir_version=relevante, analisis=analisis)
     if relevante and not analisis and reinterpretar:
         db.reiniciar_analisis(emp["id"], uid)

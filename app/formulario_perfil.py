@@ -127,10 +127,10 @@ def contar_coincidencias(palabra: str) -> int:
     return int((comun.puntuar_palabras(abiertas, [palabra]) > 0).sum())
 
 
-def ejecutar_interpretacion(p: dict) -> dict | None:
+def ejecutar_interpretacion(p: dict, actividad_anterior: str | None = None) -> dict | None:
     from ai.perfil import interpretar
     try:
-        return interpretar(comun.texto_perfil(p), p["palabras_clave"])
+        return interpretar(comun.texto_perfil(p), p["palabras_clave"], actividad_anterior)
     except Exception as ex:
         print(f"[IA] perfil: {type(ex).__name__}: {ex}")
         return None
